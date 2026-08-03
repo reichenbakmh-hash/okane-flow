@@ -43,6 +43,9 @@ app.use(helmet());
 app.use(express.json());
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 
+// Serve frontend (index.html) and static assets from repo root so a single deployment serves both front and API
+app.use(express.static(path.join(__dirname, '..')));
+
 // Helpers
 function signToken(payload){ return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' }); }
 function verifyToken(token){ try{ return jwt.verify(token, JWT_SECRET); }catch(e){ return null; } }
@@ -141,6 +144,11 @@ app.delete('/api/transactions/:id', authMiddleware, (req,res)=>{
 
 // Serve a health endpoint
 app.get('/health', (req,res) => res.json({ ok: true }));
+
+// Fallback: serve index.html for unknown routes (SPA support)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // Start HTTP server and WS server
 const server = app.listen(PORT, () => console.log('Okane Flow API listening on', PORT));
