@@ -1,387 +1,268 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Okane Flow - Prévision de trésorerie simple, visuelle et dynamique." />
-  <title>Okane Flow</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Okane Flow — Simplifié</title>
+  <meta name="description" content="Okane Flow — gestion simple de trésorerie, sauvegarde locale intelligente et étude de faisabilité financière." />
   <style>
-:root {
-  --bg: #f4f6f8;
-  --surface: #ffffff;
-  --text: #17212b;
-  --muted: #6d7a86;
-  --line: #e4e9ee;
-  --primary: #1d5b4f;
-  --success: #1f8a5b;
-  --danger: #c84747;
-  --shadow: 0 12px 32px rgba(23,33,43,0.06);
-  --radius: 14px;
-}
+:root{--bg:#f4f6f8;--surface:#fff;--muted:#6d7a86;--text:#17212b;--primary:#1d5b4f;--danger:#c84747;--radius:12px;--shadow:0 10px 30px rgba(23,33,43,0.06)}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
-.app-shell{min-height:100vh;display:flex}
-.sidebar{width:260px;background:#14241f;color:#fff;padding:24px;flex-shrink:0}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;background:linear-gradient(90deg,#fff,#f7fbfa);box-shadow:var(--shadow)}
 .brand{display:flex;align-items:center;gap:12px}
-.brand-mark{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#173a31;background:#f1d58a}
-.main-content{flex:1;padding:28px}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.button{border:0;border-radius:10px;padding:10px 14px;background:var(--primary);color:#fff}
-.panel{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid var(--line)}
-.metrics{display:flex;gap:12px;margin-top:12px}
-.metric{flex:1;padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#f7fbfa);border:1px solid var(--line)}
-.table{width:100%;border-collapse:collapse;margin-top:12px}
-.table th{font-size:12px;color:var(--muted);text-align:left;padding:10px}
-.table td{padding:10px;border-top:1px solid var(--line)}
-.form-row{display:flex;gap:8px}
-.input,select{padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none}
+.brand-mark{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#173a31;background:#f1d58a}
+.container{max-width:1100px;margin:20px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+.panel{background:var(--surface);border-radius:var(--radius);padding:14px;border:1px solid #e8eef1;box-shadow:var(--shadow)}
+.metrics{display:flex;gap:12px;margin-top:10px}
+.metric{flex:1;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdfc);border:1px solid #eef4f2}
+.form-row{display:flex;gap:8px;flex-wrap:wrap}
+.input,select,textarea{padding:10px;border:1px solid #e6edf0;border-radius:8px;width:100%;outline:none}
 .small{width:120px}
-.actions{display:flex;gap:8px}
-.toast{position:fixed;right:20px;bottom:20px;background:#222;color:#fff;padding:12px;border-radius:10px;display:none;align-items:center;gap:10px}
-.toast.show{display:flex}
-.auth-link{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:8px 10px;border-radius:10px}
-/* responsive */
-@media(max-width:900px){.sidebar{display:none}.main-content{margin-left:0;padding:18px}}
+.button{background:var(--primary);color:#fff;border:0;padding:10px 12px;border-radius:10px;cursor:pointer}
+.button.secondary{background:#fff;color:var(--primary);border:1px solid #dceae6}
+.table{width:100%;border-collapse:collapse;margin-top:8px}
+.table th{font-size:12px;color:var(--muted);text-align:left;padding:8px 6px}
+.table td{padding:10px;border-top:1px solid #edf2f3}
+.align-right{text-align:right}
+.controls{display:flex;gap:8px;align-items:center}
+.footer-note{color:var(--muted);font-size:13px;margin-top:10px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}.header{flex-direction:column;align-items:flex-start;gap:8px}}
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
+  <div class="app">
+    <header class="header">
       <div class="brand">
         <div class="brand-mark">OF</div>
         <div>
-          <h1>Okane Flow</h1>
-          <p style="color:#9fb4ad;font-size:12px;margin:4px 0 0">Prévisions & gestion de trésorerie</p>
+          <div style="font-weight:800">Okane Flow — version simple</div>
+          <div style="font-size:13px;color:var(--muted)">Sauvegarde locale + export/import — étude de faisabilité intégrée</div>
         </div>
       </div>
-      <nav style="margin-top:18px;display:grid;gap:8px">
-        <button class="nav-item">Tableau de bord</button>
-        <button class="nav-item">Transactions</button>
-        <button class="nav-item">Catégories</button>
-        <button class="nav-item">Calendrier</button>
-        <button class="nav-item">Paramètres</button>
-      </nav>
-      <div style="margin-top:auto">
-        <div style="font-size:12px;color:#9fb4ad">Synchronisation</div>
-        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-          <div style="width:10px;height:10px;border-radius:50%;background:#7fd0aa"></div>
-          <small style="color:#cfe9df">En ligne</small>
-        </div>
+      <div class="controls">
+        <label style="font-size:13px;color:var(--muted);margin-right:6px">Devise</label>
+        <select id="currency" style="padding:8px;border-radius:8px;border:1px solid #dfe9e6">
+          <option value="EUR">EUR — Euro (€)</option>
+          <option value="MGA">MGA — Ariary malgache (Ar)</option>
+          <option value="USD">USD — Dollar ($)</option>
+        </select>
+        <button id="export" class="button secondary">Exporter (sauvegarde)</button>
+        <input id="import-file" type="file" accept="application/json" style="display:none" />
+        <button id="import" class="button">Importer</button>
       </div>
-    </aside>
+    </header>
 
-    <main class="main-content">
-      <header class="topbar">
-        <div>
-          <h2>Bonjour — bienvenue sur Okane Flow</h2>
-          <p style="margin:6px 0 0;color:var(--muted)">Une interface simple et professionnelle pour suivre votre trésorerie.</p>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <div id="account-area"></div>
-          <button class="button" id="open-auth">Se connecter / S'inscrire</button>
-        </div>
-      </header>
+    <main class="container">
+      <div class="grid">
+        <section>
+          <div class="panel">
+            <h3 style="margin:0">Tableau de bord</h3>
+            <div style="color:var(--muted);margin-top:6px">Suivi rapide de la trésorerie et accès à l'étude de faisabilité.</div>
 
-      <section class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <h3>Vue rapide</h3>
-            <p style="color:var(--muted);margin:6px 0 0">Solde, prochains flux et risques.</p>
-          </div>
-          <div class="actions">
-            <button class="button" id="sync-now">Synchroniser</button>
-          </div>
-        </div>
-
-        <div class="metrics">
-          <div class="metric">
-            <div style="color:var(--muted);font-size:12px">Solde actuel</div>
-            <div style="font-size:20px;font-weight:800;margin-top:6px" id="balance">— €</div>
-          </div>
-          <div class="metric">
-            <div style="color:var(--muted);font-size:12px">Entrées prévues (30j)</div>
-            <div style="font-size:20px;font-weight:800;margin-top:6px;color:var(--success)" id="incoming">— €</div>
-          </div>
-          <div class="metric">
-            <div style="color:var(--muted);font-size:12px">Dépenses prévues (30j)</div>
-            <div style="font-size:20px;font-weight:800;margin-top:6px;color:var(--danger)" id="outgoing">— €</div>
-          </div>
-        </div>
-
-        <hr style="margin:16px 0;border:none;border-top:1px dashed var(--line)" />
-
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <div class="panel" style="flex:1;min-width:320px">
-            <h4>Ajouter une opération</h4>
-            <div style="margin-top:8px" class="form-stack">
-              <div class="form-row">
-                <input class="input" id="desc" placeholder="Description" />
-                <select id="type" class="input small">
-                  <option value="income">Revenu</option>
-                  <option value="expense">Dépense</option>
-                </select>
-                <input class="input small" id="amount" placeholder="Montant" />
+            <div class="metrics">
+              <div class="metric">
+                <div style="font-size:12px;color:var(--muted)">Solde actuel</div>
+                <div id="balance" style="font-weight:800;font-size:20px;margin-top:6px">—</div>
               </div>
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <input type="date" id="date" class="input" />
-                <input class="input" id="category" placeholder="Catégorie (ex: Salaire, Loyer)" />
-                <button class="button" id="add-transaction">Ajouter</button>
+              <div class="metric">
+                <div style="font-size:12px;color:var(--muted)">Total revenus</div>
+                <div id="total-income" style="font-weight:800;font-size:20px;margin-top:6px;color:green">—</div>
               </div>
-              <small style="color:var(--muted);display:block;margin-top:8px">Les opérations sont enregistrées sur votre compte et synchronisées automatiquement entre appareils.</small>
+              <div class="metric">
+                <div style="font-size:12px;color:var(--muted)">Total dépenses</div>
+                <div id="total-expense" style="font-weight:800;font-size:20px;margin-top:6px;color:var(--danger)">—</div>
+              </div>
+            </div>
+
+            <hr style="border:none;border-top:1px dashed #eef4f3;margin:12px 0" />
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:220px" class="panel">
+                <h4 style="margin:0">Ajouter une opération</h4>
+                <div style="margin-top:8px" class="form-row">
+                  <input id="op-desc" class="input" placeholder="Description" />
+                  <select id="op-type" class="input small">
+                    <option value="income">Revenu</option>
+                    <option value="expense">Dépense</option>
+                  </select>
+                  <input id="op-amount" class="input small" placeholder="Montant" />
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <input id="op-date" type="date" class="input" />
+                  <input id="op-category" class="input" placeholder="Catégorie" />
+                  <button id="op-add" class="button">Ajouter</button>
+                </div>
+                <div class="footer-note">Les données sont sauvegardées localement sur votre appareil. Pensez à exporter régulièrement.</div>
+              </div>
+
+              <div style="width:320px;min-width:220px" class="panel">
+                <h4 style="margin:0">Activité récente</h4>
+                <div id="recent-list" style="margin-top:8px;max-height:220px;overflow:auto"></div>
+                <div style="margin-top:8px;display:flex;gap:8px">
+                  <button id="undo" class="button secondary">Annuler dernière suppression</button>
+                  <button id="clear-local" class="button" style="background:#fff;color:var(--danger);border:1px solid #f5d7d7">Effacer local</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px" class="panel">
+              <h4 style="margin:0">Liste des opérations</h4>
+              <table class="table" id="ops-table">
+                <thead><tr><th>Description</th><th>Catégorie</th><th>Date</th><th class="align-right">Montant</th><th></th></tr></thead>
+                <tbody id="ops-body"></tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <div style="height:18px"></div>
+
+          <div class="panel">
+            <h3 style="margin:0">Étude de faisabilité financière</h3>
+            <div style="color:var(--muted);margin-top:6px">Calculez si un projet (ex: mariage) est possible avec votre situation actuelle.</div>
+            <div style="margin-top:10px;display:grid;gap:8px">
+              <input id="project-name" class="input" placeholder="Nom du projet (ex: Mariage)" />
+              <div style="display:flex;gap:8px">
+                <input id="monthly-income" class="input" placeholder="Revenu mensuel net" />
+                <input id="monthly-savings" class="input" placeholder="Épargne mensuelle actuelle" />
+              </div>
+              <textarea id="project-items" class="input" rows="5" placeholder="Liste des coûts (un par ligne), format: libellé;montant  \nEx: Lieu;2000000"></textarea>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="exchange-rate" class="input small" placeholder="1 EUR = ? MGA" />
+                <div style="color:var(--muted);font-size:13px">(optionnel : taux de change pour conversions)</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button id="calc-feas" class="button">Calculer faisabilité</button>
+                <button id="save-plan" class="button secondary">Enregistrer plan</button>
+              </div>
+              <div id="feas-result" style="margin-top:8px"></div>
             </div>
           </div>
 
-          <div class="panel" style="width:360px;min-width:260px">
-            <h4>Activité récente</h4>
-            <div id="recent-list" style="margin-top:10px;max-height:260px;overflow:auto"></div>
-          </div>
-        </div>
+        </section>
 
-        <div style="margin-top:18px" class="panel">
-          <h4>Transactions</h4>
-          <div class="table-wrap">
-            <table class="table" id="tx-table">
-              <thead>
-                <tr><th>Description</th><th>Catégorie</th><th>Date</th><th class="align-right">Montant</th><th></th></tr>
-              </thead>
-              <tbody id="tx-body"></tbody>
-            </table>
+        <aside>
+          <div class="panel">
+            <h4 style="margin:0">Sauvegarde & restauration</h4>
+            <div style="margin-top:8px;color:var(--muted);font-size:13px">Options simples pour conserver vos données sans serveur.</div>
+            <ol style="margin-top:8px;font-size:14px">
+              <li>Exportez vos données (bouton "Exporter") pour obtenir un fichier JSON.</li>
+              <li>Importez ce fichier sur n'importe quel appareil (bouton "Importer").</li>
+              <li>Copiez le fichier dans votre stockage cloud (Google Drive, Dropbox) pour sécurité.</li>
+            </ol>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="download-backup" class="button secondary">Télécharger sauvegarde</button>
+              <button id="share-backup" class="button">Partager sauvegarde</button>
+            </div>
+            <div class="footer-note">Astuce : utilisez un mot de passe fort pour chiffrer le fichier exporté si vous le stockez sur un cloud public.</div>
           </div>
-        </div>
-      </section>
+
+          <div style="height:12px"></div>
+
+          <div class="panel">
+            <h4 style="margin:0">Profil local</h4>
+            <div style="margin-top:8px;color:var(--muted);font-size:13px">Création d'un profil local protégé par mot de passe (stockage local seulement).</div>
+            <input id="profile-name" class="input" placeholder="Nom (optionnel)" />
+            <input id="profile-pass" class="input" type="password" placeholder="Mot de passe local (optionnel)" />
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button id="save-profile" class="button">Enregistrer profil</button>
+              <button id="clear-profile" class="button secondary">Supprimer profil</button>
+            </div>
+            <div id="profile-status" style="margin-top:8px;color:var(--muted);font-size:13px"></div>
+          </div>
+
+        </aside>
+      </div>
+
+      <div style="margin-top:18px;text-align:center;color:var(--muted);font-size:13px">Version simplifiée — données locales. Pour synchronisation multi‑appareils, exportez/importez le fichier ou utilisez un service cloud sécurisé.</div>
     </main>
   </div>
 
-  <!-- Auth Modal (simple) -->
-  <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(9,17,14,0.6);place-items:center;display:grid;z-index:120;padding:18px">
-    <div style="width:100%;max-width:420px;background:var(--surface);border-radius:12px;padding:18px">
-      <h3 id="auth-title">Connexion</h3>
-      <div style="display:grid;gap:10px;margin-top:8px">
-        <input id="auth-email" class="input" placeholder="Email" />
-        <input id="auth-password" class="input" type="password" placeholder="Mot de passe (personnalisé)" />
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button id="switch-auth" class="button button-secondary">Créer un compte</button>
-          <button id="auth-submit" class="button">Valider</button>
-        </div>
-        <div style="margin-top:8px;color:var(--muted);font-size:13px">Les mots de passe ne doivent pas être le même que votre adresse email. Les données sont stockées sur un serveur sécurisé.</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
   <script>
-  // Simplified client-side behaviour for demo purposes.
-  // Assumes existence of server APIs (placeholders):
-  // POST /api/auth/register {email,password}
-  // POST /api/auth/login {email,password} -> {token}
-  // GET /api/transactions -> [{id,description,category,date,amount,type}]
-  // POST /api/transactions {description,category,date,amount,type}
-  // DELETE /api/transactions/:id
-  // WebSocket at wss://your-server.example.com/sync?token=...
-
-  const apiBase = ''; // same origin; change to full URL if needed
-  let state = { transactions: [], undoStack: [], socket: null, token: localStorage.getItem('of_token') };
+  // Simple local-only app logic: store operations and plans in localStorage with backups export/import
+  const STORAGE_KEY = 'of_data_v1';
+  let state = { ops: [], plans: [], undoStack: [] };
 
   // Utilities
-  function formatCurrency(v){
-    if (v==null) return '— €';
-    return Number(v).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
-  }
-  function showToast(message, actionLabel, action){
-    const t = document.getElementById('toast');
-    t.innerHTML = message + (actionLabel ? (' <button id="toast-act" style="background:transparent;border:none;color:#fff;font-weight:800;margin-left:8px">'+actionLabel+'</button>') : '');
-    t.classList.add('show');
-    if(actionLabel){
-      document.getElementById('toast-act').onclick = ()=>{ action(); hideToast(); };
-    }
-    setTimeout(hideToast, 8000);
-  }
-  function hideToast(){ document.getElementById('toast').classList.remove('show'); }
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function nowDate(){ return new Date().toISOString().slice(0,10); }
+  function readState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw){ state = JSON.parse(raw); } else { state = { ops:[], plans:[], undoStack:[] }; } }catch(e){ console.warn(e); state = { ops:[], plans:[], undoStack:[] }; } }
+  function writeState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function formatCurrency(v){ const cur = document.getElementById('currency').value || 'EUR'; const locales = {EUR:'fr-FR',MGA:'fr-MG',USD:'en-US'}; try{ return Number(v).toLocaleString(locales[cur]||'fr-FR',{style:'currency',currency:cur}); }catch(e){ return v + ' ' + cur; } }
+  function show(msg){ const el = document.getElementById('feas-result'); el.innerText = msg; setTimeout(()=>{ el.innerText=''; },6000); }
 
-  // Auth UI
-  const authModal = document.getElementById('auth-modal');
-  const openAuth = document.getElementById('open-auth');
-  const switchAuth = document.getElementById('switch-auth');
-  const authTitle = document.getElementById('auth-title');
-  let isRegister = false;
+  // Render
+  function renderAll(){ renderOps(); computeSummary(); renderRecent(); renderProfileStatus(); }
 
-  openAuth.addEventListener('click', ()=>{ authModal.style.display='grid'; });
-  authModal.addEventListener('click', (e)=>{ if(e.target===authModal) authModal.style.display='none'; });
-  switchAuth.addEventListener('click', ()=>{ isRegister = !isRegister; authTitle.textContent = isRegister ? "Créer un compte" : "Connexion"; switchAuth.textContent = isRegister ? 'J'ai déjà un compte' : "Créer un compte"; });
+  function renderOps(){ const body = document.getElementById('ops-body'); body.innerHTML=''; state.ops.slice().reverse().forEach(op=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(op.desc)}</td><td>${escapeHtml(op.category||'')}</td><td>${op.date||''}</td><td class="align-right">${formatCurrency(op.amount)}</td><td class="align-right"><button data-id="${op.id}" class="btn-del">Suppr</button></td>`; body.appendChild(tr); }); document.querySelectorAll('.btn-del').forEach(b=>b.onclick = ()=>deleteOp(b.dataset.id)); }
+  function renderRecent(){ const el = document.getElementById('recent-list'); el.innerHTML=''; state.ops.slice().reverse().slice(0,8).forEach(op=>{ const d = document.createElement('div'); d.style.padding='6px 0'; d.textContent = `${op.date||''} — ${op.desc} ${formatCurrency(op.amount)}`; el.appendChild(d); }); }
 
-  document.getElementById('auth-submit').addEventListener('click', async ()=>{
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value;
-    if(!email || !password){ showToast('Email et mot de passe requis'); return; }
-    try{
-      if(isRegister){
-        await fetch(apiBase + '/api/auth/register', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-        showToast('Compte créé, vous êtes connecté');
-      }
-      const res = await fetch(apiBase + '/api/auth/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-      if(!res.ok) throw new Error('Échec de la connexion');
-      const data = await res.json();
-      state.token = data.token; localStorage.setItem('of_token', data.token);
-      authModal.style.display='none';
-      updateAccountArea();
-      await fetchTransactions();
-      setupSync();
-    }catch(err){ console.error(err); showToast(err.message || 'Erreur d\'authentification'); }
-  });
+  function computeSummary(){ const income = state.ops.filter(o=>o.type==='income').reduce((s,o)=>s+Number(o.amount),0); const expense = state.ops.filter(o=>o.type==='expense').reduce((s,o)=>s+Number(o.amount),0); const balance = income - expense; document.getElementById('total-income').textContent = formatCurrency(income); document.getElementById('total-expense').textContent = formatCurrency(expense); document.getElementById('balance').textContent = formatCurrency(balance); }
 
-  function updateAccountArea(){
-    const el = document.getElementById('account-area');
-    el.innerHTML = '';
-    if(state.token){
-      const btn = document.createElement('button'); btn.className='button'; btn.textContent='Mon compte';
-      const out = document.createElement('button'); out.className='button button-secondary'; out.textContent='Se déconnecter';
-      out.onclick = ()=>{ state.token=null; localStorage.removeItem('of_token'); updateAccountArea(); showToast('Déconnecté'); if(state.socket) state.socket.close(); };
-      el.appendChild(btn); el.appendChild(out);
-    } else {
-      const ln = document.createElement('button'); ln.className='auth-link'; ln.textContent='Invité'; el.appendChild(ln);
-    }
+  // CRUD
+  function addOp(op){ op.id = op.id || uid(); state.ops.push(op); writeState(); renderAll(); }
+  function deleteOp(id){ const idx = state.ops.findIndex(o=>o.id===id); if(idx===-1) return; const [removed] = state.ops.splice(idx,1); state.undoStack.push(removed); writeState(); renderAll(); alert('Opération supprimée. Appuyez sur Annuler dernière suppression pour restaurer.'); }
+  function undoLast(){ const last = state.undoStack.pop(); if(!last) { alert('Rien à annuler'); return; } state.ops.push(last); writeState(); renderAll(); }
+  function clearLocal(){ if(confirm('Effacer toutes les données locales ? Cette action est irréversible sauf si vous avez une sauvegarde.')){ state = { ops:[], plans:[], undoStack:[] }; writeState(); renderAll(); } }
+
+  // Export / Import
+  function exportData(){ const data = { state, exportedAt: new Date().toISOString() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `okane-flow-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+  function importDataFile(file){ if(!file) return; const reader = new FileReader(); reader.onload = (e)=>{ try{ const parsed = JSON.parse(e.target.result); if(parsed && parsed.state){ state = parsed.state; writeState(); renderAll(); alert('Import terminé'); }else{ alert('Fichier invalide'); } }catch(err){ alert('Erreur lecture fichier'); } }; reader.readAsText(file); }
+
+  // Share backup (Web Share / navigator.share) - tries to share JSON string
+  async function shareBackup(){ try{ const data = { state, exportedAt: new Date().toISOString() }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const file = new File([blob], `okane-backup-${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' }); if(navigator.canShare && navigator.canShare({ files: [file] })){ await navigator.share({ files: [file], title: 'Okane Flow backup', text: 'Sauvegarde Okane Flow' }); } else { // fallback to download
+      exportData(); alert('Partage non disponible — fichier téléchargé localement.'); } }catch(e){ console.warn(e); exportData(); alert('Partage échoué — fichier téléchargé localement.'); } }
+
+  // Profile local (simple): store name and hint that password is local only
+  function saveProfile(){ const name = document.getElementById('profile-name').value.trim(); const pass = document.getElementById('profile-pass').value; const profile = { name: name || '', createdAt: new Date().toISOString() }; if(pass) profile.hint = 'mot de passe défini (stocké localement)'; localStorage.setItem('of_profile', JSON.stringify(profile)); renderProfileStatus(); alert('Profil enregistré localement'); }
+  function clearProfile(){ localStorage.removeItem('of_profile'); renderProfileStatus(); alert('Profil local supprimé'); }
+  function renderProfileStatus(){ const el = document.getElementById('profile-status'); const raw = localStorage.getItem('of_profile'); if(raw){ const p = JSON.parse(raw); el.textContent = `Profil: ${p.name || '(sans nom)'} — créé ${p.createdAt.slice(0,10)} ${p.hint?'- '+p.hint:''}`; } else el.textContent = 'Aucun profil local'; }
+
+  // Study feasibility
+  function parseItems(txt){ return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{ const parts = line.split(';').map(s=>s.trim()); return { label: parts[0]||'Item', amount: Number(parts[1]||0) }; }); }
+
+  function calcFeasibility(){ const name = (document.getElementById('project-name').value||'Projet'); const monthlyIncome = Number((document.getElementById('monthly-income').value||0)); const monthlySavings = Number((document.getElementById('monthly-savings').value||0)); const itemsRaw = document.getElementById('project-items').value||''; const items = parseItems(itemsRaw); const totalCost = items.reduce((s,i)=>s + Number(i.amount),0); const cur = document.getElementById('currency').value || 'EUR'; const rate = Number(document.getElementById('exchange-rate').value) || 1; // exchange optional
+    const monthlyAvailable = Math.max(0, monthlySavings || (monthlyIncome * 0.2)); // fallback: si épargne non renseignée, estimé 20% du revenu
+    const monthsNeeded = monthlyAvailable>0 ? Math.ceil(totalCost / monthlyAvailable) : Infinity;
+    // basic plan: list items with suggestion on source
+    const suggestions = items.map(it=>{ let source = 'Épargne personnelle'; if(it.amount > monthlyIncome * 3) source = 'Peut nécessiter prêt ou collecte'; return { label: it.label, amount: it.amount, suggestion: source }; });
+    // render
+    const res = document.getElementById('feas-result'); res.innerHTML = `<strong>${escapeHtml(name)}</strong><br/>Coût total: ${formatCurrency(totalCost)} ${cur!=='EUR' && rate?`(≈ ${ (totalCost*rate).toLocaleString() } ${cur})` : ''}<br/>Épargne disponible par mois: ${formatCurrency(monthlyAvailable)}<br/>Temps estimé pour atteindre l'objectif: ${monthsNeeded===Infinity? 'Impossible avec les montants actuels' : monthsNeeded + ' mois'}<br/><br/><strong>Détail des postes</strong><ul>${suggestions.map(s=>`<li>${escapeHtml(s.label)} — ${formatCurrency(s.amount)} — suggestion: ${escapeHtml(s.suggestion)}</li>`).join('')}</ul>`;
+    // save plan
+    const plan = { id: uid(), name, items, totalCost, monthlyAvailable, monthsNeeded, createdAt: new Date().toISOString() };
+    state.plans = state.plans || []; state.plans.push(plan); writeState();
   }
 
-  // Transactions
-  async function fetchTransactions(){
-    try{
-      const res = await fetch(apiBase + '/api/transactions', {headers: authHeader()});
-      if(res.status===401){ state.token=null; localStorage.removeItem('of_token'); updateAccountArea(); return; }
-      const list = await res.json();
-      state.transactions = list;
-      renderTransactions();
-      computeMetrics();
-    }catch(err){ console.warn('fetch tx failed',err); }
-  }
+  // helpers
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
 
-  function authHeader(){ return state.token ? {'Authorization':'Bearer '+state.token} : {}; }
+  // Event wiring
+  document.getElementById('op-add').addEventListener('click', ()=>{
+    const desc = document.getElementById('op-desc').value.trim(); const amount = parseFloat(document.getElementById('op-amount').value); const type = document.getElementById('op-type').value; const date = document.getElementById('op-date').value || nowDate(); const category = document.getElementById('op-category').value.trim(); if(!desc || isNaN(amount)){ alert('Description et montant valides requis'); return; } addOp({ desc, amount, type, date, category }); document.getElementById('op-desc').value=''; document.getElementById('op-amount').value=''; });
 
-  function renderTransactions(){
-    const body = document.getElementById('tx-body'); body.innerHTML='';
-    const recent = document.getElementById('recent-list'); recent.innerHTML='';
-    state.transactions.slice().reverse().forEach(tx=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(tx.description || '')}</td><td>${escapeHtml(tx.category||'')}</td><td>${tx.date||''}</td><td class="align-right">${formatCurrency(tx.amount)}</td><td class="align-right"><button data-id="${tx.id}" class="mini-button">Supprimer</button></td>`;
-      body.appendChild(tr);
-      const r = document.createElement('div'); r.style.padding='6px 0'; r.textContent = `${tx.date || ''} — ${tx.description} ${formatCurrency(tx.amount)}`; recent.appendChild(r);
-    });
-    // attach delete handlers
-    document.querySelectorAll('.mini-button').forEach(btn=>btn.addEventListener('click', (e)=>{
-      const id = e.currentTarget.dataset.id; removeTransaction(id);
-    }));
-  }
+  document.getElementById('undo').addEventListener('click', ()=>{ undoLast(); });
+  document.getElementById('clear-local').addEventListener('click', ()=>{ clearLocal(); });
+  document.getElementById('export').addEventListener('click', ()=>{ exportData(); });
+  document.getElementById('download-backup').addEventListener('click', ()=>{ exportData(); });
+  document.getElementById('share-backup').addEventListener('click', ()=>{ shareBackup(); });
+  document.getElementById('import').addEventListener('click', ()=>{ document.getElementById('import-file').click(); });
+  document.getElementById('import-file').addEventListener('change', (e)=>{ importDataFile(e.target.files[0]); e.target.value=''; });
+  document.getElementById('save-profile').addEventListener('click', ()=>{ saveProfile(); });
+  document.getElementById('clear-profile').addEventListener('click', ()=>{ if(confirm('Supprimer le profil local ?')) clearProfile(); });
+  document.getElementById('calc-feas').addEventListener('click', ()=>{ calcFeasibility(); });
+  document.getElementById('save-plan').addEventListener('click', ()=>{ alert('Plan enregistré localement. Vous pouvez l\'exporter via Exporter.'); });
 
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+  document.getElementById('currency').addEventListener('change', ()=>{ renderAll(); });
 
-  function computeMetrics(){
-    const bal = state.transactions.reduce((s,t)=> s + (t.type==='income'?Number(t.amount): -Number(t.amount)), 0);
-    const incoming = state.transactions.filter(t=>t.type==='income' && withinDays(t.date,30)).reduce((s,t)=>s+Number(t.amount),0);
-    const outgoing = state.transactions.filter(t=>t.type==='expense' && withinDays(t.date,30)).reduce((s,t)=>s+Number(t.amount),0);
-    document.getElementById('balance').textContent = formatCurrency(bal);
-    document.getElementById('incoming').textContent = formatCurrency(incoming);
-    document.getElementById('outgoing').textContent = formatCurrency(outgoing);
-  }
-  function withinDays(dateStr,days){ if(!dateStr) return false; const d=new Date(dateStr); const diff=(new Date()-d)/(1000*60*60*24); return diff<=days; }
+  // init
+  readState(); renderAll();
 
-  document.getElementById('add-transaction').addEventListener('click', async ()=>{
-    const description = document.getElementById('desc').value.trim();
-    const amount = parseFloat(document.getElementById('amount').value);
-    const type = document.getElementById('type').value;
-    const date = document.getElementById('date').value || new Date().toISOString().slice(0,10);
-    const category = document.getElementById('category').value.trim();
-    if(!description || !amount || isNaN(amount)){ showToast('Description et montant valides requis'); return; }
-    const payload = {description,amount,type,date,category};
-    try{
-      const res = await fetch(apiBase + '/api/transactions', {method:'POST',headers: Object.assign({'Content-Type':'application/json'}, authHeader()), body: JSON.stringify(payload)});
-      if(!res.ok) throw new Error('Impossible d\'ajouter');
-      const created = await res.json();
-      // optimistic update: server will broadcast; but also insert locally
-      state.transactions.push(created);
-      renderTransactions(); computeMetrics();
-      showToast('Opération ajoutée');
-    }catch(err){ console.error(err); showToast('Erreur lors de l\'ajout'); }
-  });
-
-  // Remove with undo: perform delete on server, keep copy in undo stack for 8s
-  async function removeTransaction(id){
-    const idx = state.transactions.findIndex(t=>t.id==id);
-    if(idx===-1) return;
-    const tx = state.transactions[idx];
-    // remove locally
-    state.transactions.splice(idx,1);
-    renderTransactions(); computeMetrics();
-    // push undo entry
-    state.undoStack.push({tx,timeout:null});
-    showToast('Opération supprimée', 'Annuler', ()=>undoDelete(tx.id));
-    // call server delete
-    try{
-      const res = await fetch(apiBase + '/api/transactions/' + id, {method:'DELETE',headers: authHeader()});
-      if(!res.ok){ throw new Error('Suppression serveur échouée'); }
-    }catch(err){
-      console.warn('server delete failed',err);
-      // keep in undo stack — user can still try to undo which will re-post
-      showToast('Erreur de synchronisation — elle sera retentée automatiquement');
-    }
-    // set removal finalizer: after 8s, clear from undoStack
-    const entry = state.undoStack.find(u=>u.tx.id==id);
-    if(entry){ entry.timeout = setTimeout(()=>{
-      state.undoStack = state.undoStack.filter(u=>u.tx.id!=id);
-    },8000); }
-  }
-
-  async function undoDelete(id){
-    const entry = state.undoStack.find(u=>u.tx.id==id);
-    if(!entry) return;
-    clearTimeout(entry.timeout);
-    // re-add locally and to server
-    try{
-      const res = await fetch(apiBase + '/api/transactions', {method:'POST',headers: Object.assign({'Content-Type':'application/json'}, authHeader()), body: JSON.stringify(entry.tx)});
-      if(!res.ok) throw new Error('Restauration échouée');
-      const recreated = await res.json();
-      state.transactions.push(recreated);
-      state.undoStack = state.undoStack.filter(u=>u.tx.id!=id);
-      renderTransactions(); computeMetrics();
-      showToast('Restauration effectuée');
-    }catch(err){ console.error(err); showToast('Impossible de restaurer pour l\'instant'); }
-  }
-
-  // Sync: WebSocket + fallback polling
-  function setupSync(){
-    if(!state.token) return;
-    if(state.socket){ state.socket.close(); state.socket=null; }
-    try{
-      const wsUrl = (location.protocol==='https:'? 'wss://' : 'ws://') + location.host + '/ws/sync?token=' + encodeURIComponent(state.token);
-      const socket = new WebSocket(wsUrl);
-      state.socket = socket;
-      socket.onopen = ()=>{ console.log('WS open'); showToast('Synchronisation en temps réel active'); };
-      socket.onmessage = (ev)=>{
-        try{ const msg = JSON.parse(ev.data); if(msg.type==='transactions:update'){ state.transactions = msg.data; renderTransactions(); computeMetrics(); } }
-        catch(e){ console.warn('ws parse',e); }
-      };
-      socket.onclose = ()=>{ console.log('WS closed'); // fallback: polling
-        if(state.token) startPolling();
-      };
-      socket.onerror = (e)=>{ console.warn('WS error',e); socket.close(); };
-    }catch(e){ console.warn('setup ws failed',e); startPolling(); }
-  }
-  let pollInterval = null;
-  function startPolling(){ if(pollInterval) return; pollInterval = setInterval(()=>{ fetchTransactions(); }, 15000); }
-  function stopPolling(){ if(pollInterval){ clearInterval(pollInterval); pollInterval=null; } }
-
-  // Manual sync button
-  document.getElementById('sync-now').addEventListener('click', ()=>{ fetchTransactions(); showToast('Synchronisation demandée'); });
-
-  function setupSyncOnLoad(){ if(state.token) setupSync(); else startPolling(); }
-
-  // Initial load
-  updateAccountArea(); fetchTransactions(); setupSyncOnLoad();
-
-  // helper: simple escape for innerHTML usage above
-
-  // Expose for debugging
-  window._of = {state, fetchTransactions, setupSync, undoDelete};
+  // expose for debug
+  window._of_local = { state, readState, writeState, exportData };
   </script>
 </body>
 </html>
