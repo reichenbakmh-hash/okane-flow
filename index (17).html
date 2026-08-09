@@ -1,0 +1,5387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>
+  (function () {
+    try {
+      var mode = localStorage.getItem("okaneFlowThemeMode") || "system";
+      var resolved = mode === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : mode;
+      document.documentElement.setAttribute("data-theme", resolved);
+    } catch (e) {}
+  })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Okane Flow - Prévision de trésorerie simple, visuelle et dynamique." />
+  <title>Okane Flow</title>
+  <meta name="theme-color" content="#14241f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Okane Flow" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <style>
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-soft: #f8fafb;
+  --text: #17212b;
+  --muted: #6d7a86;
+  --line: #e4e9ee;
+  --primary: #1d5b4f;
+  --primary-dark: #15463d;
+  --primary-soft: #e9f3f0;
+  --success: #1f8a5b;
+  --success-soft: #e9f7f0;
+  --danger: #c84747;
+  --danger-soft: #fff0f0;
+  --warning: #b97816;
+  --warning-soft: #fff6e7;
+  --shadow: 0 16px 40px rgba(23, 33, 43, 0.07);
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+
+html[data-theme="dark"] {
+  --bg: #10161a;
+  --surface: #1a2226;
+  --surface-soft: #212a2f;
+  --text: #e9edf0;
+  --muted: #8fa0a8;
+  --line: #2c383e;
+  --primary: #4fb99f;
+  --primary-dark: #3d9a83;
+  --primary-soft: #1c332d;
+  --success: #3fcf8e;
+  --success-soft: #163627;
+  --danger: #e57373;
+  --danger-soft: #3a1f1f;
+  --warning: #e0a94e;
+  --warning-soft: #362a12;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.theme-toggle {
+  display: flex;
+  gap: 6px;
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.theme-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 6px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.theme-toggle button.active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(23, 33, 43, 0.15);
+}
+
+.ai-panel {
+  display: flex;
+  flex-direction: column;
+  height: min(72vh, 640px);
+}
+
+.ai-disclaimer {
+  font-size: 0.82rem;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin: 0 0 14px;
+}
+
+.ai-chat-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 2px 12px;
+}
+
+.ai-message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.ai-message.user {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-message.assistant {
+  align-self: flex-start;
+  background: var(--surface-soft);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.ai-message.pending {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.ai-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-suggestion-chip {
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-suggestion-chip:hover {
+  background: var(--primary-soft);
+}
+
+.ai-message.assistant strong {
+  color: var(--primary);
+}
+
+.ai-chat-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.ai-chat-form textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 260px;
+  background: #14241f;
+  color: #fff;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  transition: transform 0.25s ease;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px 28px;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #173a31;
+  background: #f1d58a;
+}
+
+.brand h1,
+.brand p {
+  margin: 0;
+}
+
+.brand h1 {
+  font-size: 18px;
+}
+
+.brand p {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #9fb4ad;
+}
+
+.nav-list {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-item {
+  border: 0;
+  background: transparent;
+  color: #afc0bb;
+  padding: 13px 14px;
+  border-radius: 12px;
+  text-align: left;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  transition: 0.2s ease;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-item.active {
+  box-shadow: inset 3px 0 0 #f1d58a;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+}
+
+.status-chip {
+  font-size: 12px;
+  color: #9fb4ad;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7fd0aa;
+}
+
+.main-content {
+  margin-left: 260px;
+  padding: 0 32px 48px;
+}
+
+.topbar {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar h2,
+.topbar p {
+  margin: 0;
+}
+
+.topbar h2 {
+  font-size: 28px;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.button {
+  border: 0;
+  border-radius: 11px;
+  padding: 11px 16px;
+  font-weight: 750;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.button-primary:hover {
+  background: var(--primary-dark);
+}
+
+.button-secondary {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.button-danger {
+  color: #fff;
+  background: var(--danger);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font-size: 20px;
+}
+
+.mobile-only {
+  display: none;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.hero-card {
+  background: linear-gradient(135deg, #163f35, #1c5b4d);
+  color: #fff;
+  padding: 28px;
+  border-radius: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+
+.hero-card .eyebrow {
+  color: #b8d8ce;
+}
+
+.hero-card h3 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+}
+
+.hero-card p:last-child {
+  margin: 8px 0 0;
+  color: #cce0da;
+}
+
+.compact-field {
+  min-width: 150px;
+}
+
+.compact-field span {
+  color: #d7e6e1;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.metric-card,
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.metric-card {
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.metric-card p,
+.metric-card small,
+.metric-card strong {
+  display: block;
+}
+
+.metric-card p {
+  color: var(--muted);
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.metric-card strong {
+  font-size: 21px;
+  margin-bottom: 5px;
+}
+
+.metric-card small {
+  color: #8a96a0;
+  font-size: 11px;
+}
+
+.metric-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.metric-icon.income,
+.metric-icon.positive {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.metric-icon.negative {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.metric-icon.balance {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(290px, 0.85fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.bottom-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel {
+  padding: 20px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.panel-header h3,
+.panel-header p {
+  margin: 0;
+}
+
+.panel-header h3 {
+  font-size: 18px;
+}
+
+.chart-wrap {
+  position: relative;
+  min-height: 360px;
+}
+
+.chart-wrap canvas {
+  width: 100% !important;
+  height: 360px !important;
+}
+
+.legend {
+  display: flex;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.legend i {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  border-radius: 99px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.legend-line {
+  background: var(--primary);
+}
+
+.legend-risk {
+  background: var(--danger);
+}
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  color: var(--muted);
+  padding: 24px;
+}
+
+.empty-state.show {
+  display: grid;
+}
+
+.empty-state.compact {
+  position: static;
+  min-height: 240px;
+}
+
+.empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--surface-soft);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.empty-state h4,
+.empty-state p {
+  margin: 0;
+}
+
+.empty-state p {
+  margin-top: 6px;
+  max-width: 420px;
+  font-size: 13px;
+}
+
+.risk-badge,
+.count-badge {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.risk-badge.safe {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.risk-badge.warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.risk-badge.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.risk-summary {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 15px;
+  background: var(--surface-soft);
+  border-radius: 14px;
+}
+
+.risk-summary strong,
+.risk-summary p {
+  display: block;
+  margin: 0;
+}
+
+.risk-summary p {
+  color: var(--muted);
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.risk-visual {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+
+.risk-visual.safe {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.risk-visual.warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.risk-visual.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.risk-details {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.risk-detail {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.risk-detail:last-child {
+  border-bottom: 0;
+}
+
+.risk-detail strong,
+.risk-detail span {
+  display: block;
+}
+
+.risk-detail span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.event-list {
+  display: grid;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.event-row:last-child {
+  border-bottom: 0;
+}
+
+.event-type-dot {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+
+.event-type-dot.income {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.event-type-dot.expense {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.event-row h4,
+.event-row p,
+.event-row strong {
+  margin: 0;
+}
+
+.event-row h4 {
+  font-size: 14px;
+}
+
+.event-row p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.event-row strong {
+  font-size: 14px;
+}
+
+.category-list {
+  display: grid;
+  gap: 13px;
+}
+
+.category-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 14px;
+}
+
+.category-item p,
+.category-item strong {
+  margin: 0;
+  font-size: 13px;
+}
+
+.category-item p {
+  color: var(--muted);
+}
+
+.progress {
+  grid-column: 1 / -1;
+  height: 7px;
+  background: var(--surface-soft);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.section-toolbar {
+  margin-bottom: 16px;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 220px 220px;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field > span {
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 11px 12px;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #8db4aa;
+  box-shadow: 0 0 0 3px rgba(29, 91, 79, 0.1);
+}
+
+.field small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.input-with-suffix {
+  position: relative;
+}
+
+.input-with-suffix input {
+  padding-right: 52px;
+}
+
+.input-with-suffix span {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+th {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+td {
+  font-size: 13px;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.table-title strong,
+.table-title span {
+  display: block;
+}
+
+.table-title span {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.amount-income {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.amount-expense {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.pill.income {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.pill.expense {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.mini-button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 9px;
+  padding: 7px 9px;
+}
+
+.mini-button.danger {
+  color: var(--danger);
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.calendar-header {
+  align-items: flex-end;
+}
+
+.calendar-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekdays {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.calendar-day {
+  min-height: 124px;
+  border: 1px solid var(--line);
+  padding: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.calendar-day:nth-child(n + 8) {
+  border-top: 0;
+}
+
+.calendar-day:not(:nth-child(7n + 1)) {
+  border-left: 0;
+}
+
+.calendar-day.muted {
+  background: var(--surface-soft);
+  color: #a8b0b7;
+}
+
+.calendar-day.today {
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.calendar-day-number {
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.calendar-event {
+  border-radius: 7px;
+  padding: 5px 6px;
+  margin-bottom: 5px;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-event.income {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.calendar-event.expense {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.settings-grid .info-panel {
+  grid-column: 1 / -1;
+}
+
+.form-stack {
+  display: grid;
+  gap: 15px;
+}
+
+.file-button {
+  display: inline-flex;
+  justify-content: center;
+}
+
+.info-panel p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.feature-list {
+  padding-left: 20px;
+  line-height: 1.9;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 17, 14, 0.58);
+  display: none;
+  place-items: center;
+  padding: 18px;
+  z-index: 100;
+}
+
+.modal-backdrop.open {
+  display: grid;
+}
+
+.modal {
+  width: min(760px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.28);
+}
+
+.modal-header,
+.modal-footer {
+  padding: 20px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-header h3,
+.modal-header p {
+  margin: 0;
+}
+
+.modal-body {
+  padding: 22px;
+}
+
+.modal-footer {
+  padding: 20px 0 0;
+  justify-content: flex-end;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  background: var(--surface-soft);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 18px;
+}
+
+.segmented-control input {
+  position: absolute;
+  opacity: 0;
+}
+
+.segmented-control span {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.segmented-control input:checked + span {
+  color: #fff;
+  background: var(--primary);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.full-span {
+  grid-column: 1 / -1;
+}
+
+.toast-container {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 200;
+  display: grid;
+  gap: 10px;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 380px;
+  background: #15221e;
+  color: #fff;
+  border-radius: 12px;
+  padding: 13px 15px;
+  box-shadow: var(--shadow);
+  animation: slideIn 0.2s ease;
+}
+
+.toast.error {
+  background: #7f2f2f;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 1100px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 0 18px 36px;
+  }
+
+  .mobile-only {
+    display: grid;
+  }
+
+  .topbar {
+    min-height: 84px;
+  }
+
+  .topbar-actions .button-secondary {
+    display: none;
+  }
+
+  .filters-grid,
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-grid .info-panel {
+    grid-column: auto;
+  }
+
+  .calendar-day {
+    min-height: 95px;
+  }
+}
+
+@media (max-width: 620px) {
+  .chart-wrap {
+    min-height: 280px;
+  }
+
+  .chart-wrap canvas {
+    height: 280px !important;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    padding: 16px 0;
+  }
+
+  .topbar h2 {
+    font-size: 22px;
+  }
+
+  .topbar-actions .button {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .hero-card {
+    align-items: flex-start;
+    gap: 18px;
+    flex-direction: column;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .legend {
+    display: none;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-span {
+    grid-column: auto;
+  }
+
+  .calendar-day {
+    min-height: 74px;
+    padding: 6px;
+  }
+
+  .calendar-event {
+    font-size: 0;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    display: inline-block;
+    border-radius: 50%;
+  }
+}
+
+  
+/* Module d'étude de faisabilité financière */
+.feasibility-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 18px;
+}
+
+.feasibility-form {
+  display: grid;
+  gap: 18px;
+}
+
+.subsection {
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  border-radius: 15px;
+  padding: 16px;
+}
+
+.subsection-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.subsection-header h4,
+.subsection-header p {
+  margin: 0;
+}
+
+.subsection-header h4 {
+  font-size: 15px;
+}
+
+.subsection-header p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.dynamic-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dynamic-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.4fr) minmax(125px, 0.7fr) minmax(130px, 0.8fr) 38px;
+  gap: 9px;
+  align-items: end;
+}
+
+.dynamic-row.cost-row {
+  grid-template-columns: minmax(145px, 1.25fr) minmax(115px, 0.72fr) minmax(130px, 0.78fr) minmax(120px, 0.72fr) 38px;
+}
+
+.dynamic-row input,
+.dynamic-row select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 10px 11px;
+  outline: none;
+}
+
+.dynamic-row input:focus,
+.dynamic-row select:focus {
+  border-color: #8db4aa;
+  box-shadow: 0 0 0 3px rgba(29, 91, 79, 0.1);
+}
+
+.dynamic-label {
+  display: grid;
+  gap: 6px;
+}
+
+.dynamic-label > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.remove-row-btn {
+  width: 38px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--danger);
+  font-size: 19px;
+}
+
+.add-row-btn {
+  margin-top: 10px;
+  border: 1px dashed #aac2bb;
+  background: transparent;
+  color: var(--primary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.feasibility-results {
+  position: sticky;
+  top: 18px;
+  align-self: start;
+}
+
+.feasibility-status {
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 15px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+}
+
+.feasibility-status.good {
+  background: var(--success-soft);
+  border-color: #cbe8d8;
+}
+
+.feasibility-status.warning {
+  background: var(--warning-soft);
+  border-color: #f0d9ae;
+}
+
+.feasibility-status.danger {
+  background: var(--danger-soft);
+  border-color: #f0caca;
+}
+
+.feasibility-status h3,
+.feasibility-status p {
+  margin: 0;
+}
+
+.feasibility-status h3 {
+  font-size: 19px;
+}
+
+.feasibility-status p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: 7px;
+}
+
+.feasibility-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feasibility-kpi {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 13px;
+  background: var(--surface);
+}
+
+.feasibility-kpi span,
+.feasibility-kpi strong,
+.feasibility-kpi small {
+  display: block;
+}
+
+.feasibility-kpi span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.feasibility-kpi strong {
+  margin-top: 7px;
+  font-size: 17px;
+}
+
+.feasibility-kpi small {
+  color: var(--muted);
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.analysis-box {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.analysis-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.analysis-item:last-child {
+  border-bottom: 0;
+}
+
+.analysis-item strong,
+.analysis-item p {
+  margin: 0;
+}
+
+.analysis-item strong {
+  font-size: 13px;
+}
+
+.analysis-item p {
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.55;
+  font-size: 12px;
+}
+
+.breakdown-table {
+  margin-top: 15px;
+  width: 100%;
+  min-width: 0;
+}
+
+.breakdown-table td,
+.breakdown-table th {
+  padding: 10px 6px;
+  font-size: 11px;
+}
+
+.method-note {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #eef3f5;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1050px) {
+  .feasibility-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .feasibility-results {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .dynamic-row,
+  .dynamic-row.cost-row {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+
+  .remove-row-btn {
+    width: 100%;
+  }
+
+  .feasibility-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.install-app-button {
+  width: 100%;
+  border: 1px solid rgba(241, 213, 138, 0.35);
+  background: rgba(241, 213, 138, 0.10);
+  color: #f1d58a;
+  padding: 12px 13px;
+  border-radius: 12px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.install-app-button:hover {
+  background: rgba(241, 213, 138, 0.16);
+}
+.install-app-button[hidden] {
+  display: none;
+}
+.offline-indicator {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 300;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: #17212b;
+  color: #fff;
+  font-size: 12px;
+  box-shadow: var(--shadow);
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: #14241f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.auth-overlay[hidden] {
+  display: none;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px 28px;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.auth-brand .brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #173a31;
+  background: #f1d58a;
+}
+
+.auth-brand h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.auth-brand p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.auth-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px;
+  border-radius: 9px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.auth-tab.active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(23, 33, 43, 0.08);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.auth-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auth-field input {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.auth-submit {
+  width: 100%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+}
+
+.auth-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 10px 0 0;
+  min-height: 1em;
+}
+
+.auth-form[hidden] {
+  display: none;
+}
+
+.sync-status {
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 0 4px;
+}
+.event-type-dot.transfer {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.pill.transfer {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.calendar-event.transfer {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.account-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  background: var(--surface-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.account-card.inactive {
+  opacity: 0.55;
+}
+
+.account-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.account-card-top strong,
+.account-card-top span {
+  display: block;
+}
+
+.account-card-top span {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.account-card-balance {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.account-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.where-money-bar {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-soft);
+  margin-bottom: 14px;
+}
+
+.where-money-bar span {
+  height: 100%;
+}
+
+.where-money-legend {
+  display: grid;
+  gap: 10px;
+}
+
+.where-money-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.where-money-legend-item i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.accounts-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .accounts-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-mark">OF</div>
+        <div>
+          <h1>Okane Flow</h1>
+          <p>Connecte-toi pour accéder à tes données</p>
+        </div>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="authTabLogin">Connexion</button>
+        <button type="button" class="auth-tab" id="authTabRegister">Créer un compte</button>
+      </div>
+
+      <form class="auth-form" id="loginForm">
+        <div class="auth-field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" autocomplete="username" required />
+        </div>
+        <div class="auth-field">
+          <label for="loginPassword">Mot de passe</label>
+          <input type="password" id="loginPassword" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="auth-submit" id="loginSubmit">Se connecter</button>
+        <p class="auth-error" id="loginError"></p>
+      </form>
+
+      <form class="auth-form" id="registerForm" hidden>
+        <div class="auth-field">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" autocomplete="username" required />
+        </div>
+        <div class="auth-field">
+          <label for="registerPassword">Mot de passe (8 caractères min)</label>
+          <input type="password" id="registerPassword" autocomplete="new-password" minlength="8" required />
+        </div>
+        <button type="submit" class="auth-submit" id="registerSubmit">Créer mon compte</button>
+        <p class="auth-error" id="registerError"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-shell" id="appShell" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">OF</div>
+        <div>
+          <h1>Okane Flow</h1>
+          <p>Cashflow planner</p>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="Navigation principale">
+        <button class="nav-item active" data-view="dashboard">
+          <span>◫</span> Tableau de bord
+        </button>
+        <button class="nav-item" data-view="accounts">
+          <span>◈</span> Comptes
+        </button>
+        <button class="nav-item" data-view="budget">
+          <span>▤</span> Budget
+        </button>
+        <button class="nav-item" data-view="transactions">
+          <span>↕</span> Événements
+        </button>
+        <button class="nav-item" data-view="calendar">
+          <span>▦</span> Calendrier
+        </button>
+        <button class="nav-item" data-view="feasibility">
+          <span>◇</span> Faisabilité
+        </button>
+        <button class="nav-item" data-view="assistant">
+          <span>✦</span> Okane IA
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span>⚙</span> Paramètres
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="install-app-button" id="installAppBtn" hidden>
+          <span>📥</span>
+          Installer Okane Flow
+        </button>
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          <span id="syncStatusText">Données enregistrées localement</span>
+        </div>
+        <button class="install-app-button" id="logoutBtn">
+          <span>🚪</span>
+          Se déconnecter
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button mobile-only" id="sidebarToggle" aria-label="Ouvrir le menu">☰</button>
+          <div>
+            <p class="eyebrow" id="pageEyebrow">Vue générale</p>
+            <h2 id="pageTitle">Tableau de bord</h2>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="button button-secondary" id="loadDemoBtn">Charger une démo</button>
+          <button class="button button-primary" id="openEventModalBtn">+ Nouvel événement</button>
+        </div>
+      </header>
+
+      <section id="dashboardView" class="view active">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Prévision au <span id="forecastEndLabel">—</span></p>
+            <h3 id="projectedBalanceHero">0 Ar</h3>
+            <p id="heroStatusText">Ajoutez vos premiers événements pour commencer la simulation.</p>
+          </div>
+          <div class="hero-actions">
+            <label class="field compact-field">
+              <span>Horizon</span>
+              <select id="forecastRange">
+                <option value="30">30 jours</option>
+                <option value="60">60 jours</option>
+                <option value="90" selected>90 jours</option>
+                <option value="180">180 jours</option>
+                <option value="365">1 an</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <article class="metric-card">
+            <div class="metric-icon income">↗</div>
+            <div>
+              <p>Solde initial</p>
+              <strong id="openingBalanceMetric">0 Ar</strong>
+              <small>Point de départ de la simulation</small>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-icon positive">＋</div>
+            <div>
+              <p>Encaissements prévus</p>
+              <strong id="incomeMetric">0 Ar</strong>
+              <small>Sur l’horizon sélectionné</small>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-icon negative">−</div>
+            <div>
+              <p>Décaissements prévus</p>
+              <strong id="expenseMetric">0 Ar</strong>
+              <small>Sur l’horizon sélectionné</small>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-icon balance">◎</div>
+            <div>
+              <p>Solde final prévu</p>
+              <strong id="endingBalanceMetric">0 Ar</strong>
+              <small id="endingBalanceHint">Projection quotidienne</small>
+            </div>
+          </article>
+
+          <article class="metric-card" style="cursor:pointer" data-switch-view="accounts">
+            <div class="metric-icon positive">Σ</div>
+            <div>
+              <p>Total des avoirs</p>
+              <strong id="dashboardTotalAssetsMetric">0 Ar</strong>
+              <small>Tous vos comptes actifs — voir Comptes</small>
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel chart-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Projection</p>
+                <h3>Évolution du solde</h3>
+              </div>
+              <div class="legend">
+                <span><i class="legend-line"></i> Solde journalier</span>
+                <span><i class="legend-risk"></i> Zone de découvert</span>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="cashflowChart" aria-label="Graphique de trésorerie"></canvas>
+              <div id="chartEmptyState" class="empty-state">
+                <div class="empty-icon">⌁</div>
+                <h4>Aucune projection disponible</h4>
+                <p>Ajoutez des événements pour visualiser votre trésorerie jour après jour.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel risk-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Vigilance</p>
+                <h3>Risques détectés</h3>
+              </div>
+              <span class="risk-badge" id="riskLevelBadge">Aucun</span>
+            </div>
+            <div id="riskSummary" class="risk-summary">
+              <div class="risk-visual safe">✓</div>
+              <div>
+                <strong>Aucun risque analysé</strong>
+                <p>La simulation sera évaluée dès que des données seront disponibles.</p>
+              </div>
+            </div>
+            <div id="riskDetails" class="risk-details"></div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid bottom-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">À venir</p>
+                <h3>Prochains mouvements</h3>
+              </div>
+              <button class="text-button" data-switch-view="transactions">Tout afficher</button>
+            </div>
+            <div id="upcomingEvents" class="event-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Répartition</p>
+                <h3>Flux par catégorie</h3>
+              </div>
+            </div>
+            <div id="categoryBreakdown" class="category-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="accountsView" class="view">
+        <div class="metrics-grid accounts-summary-grid">
+          <article class="metric-card">
+            <div class="metric-icon balance">Σ</div>
+            <div>
+              <p>Total des avoirs</p>
+              <strong id="totalAssetsMetric">0 Ar</strong>
+              <small>Somme des comptes actifs</small>
+            </div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-icon negative">−</div>
+            <div>
+              <p>Total des passifs</p>
+              <strong id="totalLiabilitiesMetric">0 Ar</strong>
+              <small>Dettes et échéances à venir</small>
+            </div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-icon positive">◎</div>
+            <div>
+              <p>Valeur nette</p>
+              <strong id="netWorthMetric">0 Ar</strong>
+              <small>Actifs − passifs</small>
+            </div>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Sources d’argent</p>
+              <h3>Mes comptes</h3>
+            </div>
+            <button class="button button-primary" id="addAccountBtn">+ Nouveau compte</button>
+          </div>
+          <div id="accountsGrid" class="accounts-grid"></div>
+          <div id="accountsEmptyState" class="empty-state compact">
+            <div class="empty-icon">◈</div>
+            <h4>Aucun compte pour le moment</h4>
+            <p>Créez votre première source d’argent (banque, mobile money, espèces, épargne…).</p>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Patrimoine</p>
+              <h3>Passifs (dettes, crédits, échéances)</h3>
+            </div>
+            <button class="button button-secondary" id="addLiabilityBtn">+ Ajouter un passif</button>
+          </div>
+          <div id="liabilitiesList" class="event-list"></div>
+        </article>
+      </section>
+
+      <section id="budgetView" class="view">
+        <article class="panel">
+          <div class="panel-header calendar-header">
+            <div>
+              <p class="eyebrow">Suivi budgétaire</p>
+              <h3 id="budgetMonthLabel">Mois</h3>
+            </div>
+            <div class="calendar-controls">
+              <button class="icon-button" id="prevBudgetMonthBtn" aria-label="Mois précédent">‹</button>
+              <button class="button button-secondary" id="currentBudgetMonthBtn">Mois en cours</button>
+              <button class="icon-button" id="nextBudgetMonthBtn" aria-label="Mois suivant">›</button>
+            </div>
+          </div>
+          <span class="risk-badge" id="budgetStatusBadge">Réel</span>
+          <p id="budgetRealizedHint" class="ai-disclaimer" style="margin-top:12px;"></p>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <div class="metric-icon income">↗</div>
+              <div><p>Revenus</p><strong id="budgetIncomeMetric">0 Ar</strong></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon negative">↘</div>
+              <div><p>Dépenses</p><strong id="budgetExpenseMetric">0 Ar</strong></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon balance">🐖</div>
+              <div><p>Épargne</p><strong id="budgetSavingsMetric">0 Ar</strong></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon positive">＝</div>
+              <div><p>Reste</p><strong id="budgetRemainderMetric">0 Ar</strong></div>
+            </article>
+          </div>
+        </article>
+
+        <div class="dashboard-grid bottom-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Où va mon argent ?</p>
+                <h3>Sur 100 {{devise}} gagnés</h3>
+              </div>
+            </div>
+            <div id="whereMoneyGoesBar" class="where-money-bar"></div>
+            <div id="whereMoneyGoesLegend" class="where-money-legend"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Comparaison</p>
+                <h3>Mois précédent vs actuel</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th></th><th class="align-right">Mois précédent</th><th class="align-right">Ce mois</th><th class="align-right">Variation</th></tr>
+                </thead>
+                <tbody id="budgetComparisonBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="transactionsView" class="view">
+        <div class="section-toolbar">
+          <div class="filters-grid">
+            <label class="field">
+              <span>Rechercher</span>
+              <input type="search" id="searchInput" placeholder="Libellé ou catégorie" />
+            </label>
+            <label class="field">
+              <span>Type</span>
+              <select id="typeFilter">
+                <option value="all">Tous</option>
+                <option value="income">Encaissements</option>
+                <option value="expense">Décaissements</option>
+                <option value="transfer">Transferts</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Statut</span>
+              <select id="statusFilter">
+                <option value="all">Tous</option>
+                <option value="planned">Prévu</option>
+                <option value="confirmed">Confirmé</option>
+                <option value="paid">Réalisé</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Registre</p>
+              <h3>Événements financiers</h3>
+            </div>
+            <span class="count-badge" id="eventCountBadge">0 événement</span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Événement</th>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th>Récurrence</th>
+                  <th>Statut</th>
+                  <th class="align-right">Montant</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="eventsTableBody"></tbody>
+            </table>
+            <div id="tableEmptyState" class="empty-state compact">
+              <div class="empty-icon">＋</div>
+              <h4>Aucun événement</h4>
+              <p>Créez un encaissement ou un décaissement pour alimenter la prévision.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="calendarView" class="view">
+        <article class="panel">
+          <div class="panel-header calendar-header">
+            <div>
+              <p class="eyebrow">Vision mensuelle</p>
+              <h3 id="calendarMonthLabel">Calendrier</h3>
+            </div>
+            <div class="calendar-controls">
+              <button class="icon-button" id="prevMonthBtn" aria-label="Mois précédent">‹</button>
+              <button class="button button-secondary" id="todayBtn">Aujourd’hui</button>
+              <button class="icon-button" id="nextMonthBtn" aria-label="Mois suivant">›</button>
+            </div>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </article>
+      </section>
+
+
+      <section id="feasibilityView" class="view">
+        <div class="feasibility-layout">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Décision financière</p>
+                <h3>Étude de faisabilité d’un projet</h3>
+              </div>
+              <button class="button button-secondary" id="loadFeasibilityDemoBtn">Exemple</button>
+            </div>
+
+            <form id="feasibilityForm" class="feasibility-form">
+              <div class="subsection">
+                <div class="subsection-header">
+                  <div>
+                    <h4>Liquidités disponibles sur vos comptes</h4>
+                    <p>Pour référence, avant de renseigner vos ressources de financement ci-dessous.</p>
+                  </div>
+                </div>
+                <div id="feasibilityAccountsSummary" class="category-list"></div>
+              </div>
+
+              <div class="subsection">
+                <div class="subsection-header">
+                  <div>
+                    <h4>1. Identification du projet</h4>
+                    <p>Définissez l’objectif, la date envisagée et la nature du porteur.</p>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <label class="field full-span">
+                    <span>Nom du projet</span>
+                    <input type="text" id="projectNameInput" maxlength="90" placeholder="Ex. Ouverture d’un petit commerce" />
+                  </label>
+                  <label class="field">
+                    <span>Profil</span>
+                    <select id="projectProfileInput">
+                      <option value="personal">Projet personnel / salarié</option>
+                      <option value="business">Création ou développement d’entreprise</option>
+                      <option value="association">Projet associatif</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Date de démarrage souhaitée</span>
+                    <input type="date" id="desiredStartDateInput" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="subsection">
+                <div class="subsection-header">
+                  <div>
+                    <h4>2. Besoins à financer</h4>
+                    <p>Détaillez les investissements, frais de lancement, stocks et autres dépenses nécessaires.</p>
+                  </div>
+                </div>
+                <div id="projectCostsList" class="dynamic-list"></div>
+                <button type="button" class="add-row-btn" id="addProjectCostBtn">+ Ajouter un coût</button>
+
+                <div class="form-grid" style="margin-top:14px">
+                  <label class="field">
+                    <span>Besoin de trésorerie initial / BFR</span>
+                    <input type="number" id="workingCapitalInput" min="0" step="1000" value="0" />
+                    <small>Montant nécessaire pour couvrir le décalage entre paiements et encaissements.</small>
+                  </label>
+                  <label class="field">
+                    <span>Marge de sécurité</span>
+                    <div class="input-with-suffix">
+                      <input type="number" id="contingencyRateInput" min="0" max="100" step="0.5" value="10" />
+                      <span>%</span>
+                    </div>
+                    <small>Appliquée aux coûts détaillés, hors besoin de trésorerie initial.</small>
+                  </label>
+                </div>
+              </div>
+
+              <div class="subsection">
+                <div class="subsection-header">
+                  <div>
+                    <h4>3. Ressources de financement</h4>
+                    <p>Recensez uniquement les ressources réellement disponibles ou raisonnablement sécurisées.</p>
+                  </div>
+                </div>
+                <div id="projectFundingList" class="dynamic-list"></div>
+                <button type="button" class="add-row-btn" id="addProjectFundingBtn">+ Ajouter un financement</button>
+              </div>
+
+              <div class="subsection">
+                <div class="subsection-header">
+                  <div>
+                    <h4>4. Capacité d’épargne mensuelle</h4>
+                    <p>Particulièrement utile pour un salarié ou un porteur finançant progressivement le projet.</p>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Revenu mensuel disponible</span>
+                    <input type="number" id="monthlyIncomeInput" min="0" step="1000" value="0" />
+                  </label>
+                  <label class="field">
+                    <span>Dépenses mensuelles incompressibles</span>
+                    <input type="number" id="monthlyExpensesInput" min="0" step="1000" value="0" />
+                  </label>
+                  <label class="field">
+                    <span>Épargne mensuelle déjà prévue</span>
+                    <input type="number" id="manualMonthlySavingsInput" min="0" step="1000" value="0" />
+                    <small>Utilisée si elle est supérieure au revenu moins les dépenses.</small>
+                  </label>
+                  <label class="field">
+                    <span>Épargne disponible aujourd’hui</span>
+                    <input type="number" id="currentSavingsInput" min="0" step="1000" value="0" />
+                    <small>À ne pas répéter dans la liste des financements.</small>
+                  </label>
+                </div>
+              </div>
+
+              <div class="subsection">
+                <div class="subsection-header">
+                  <div>
+                    <h4>5. Exploitation prévisionnelle simplifiée</h4>
+                    <p>Optionnel. Sert à estimer un excédent mensuel et un délai de récupération simple.</p>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Encaissements mensuels du projet</span>
+                    <input type="number" id="projectMonthlyRevenueInput" min="0" step="1000" value="0" />
+                  </label>
+                  <label class="field">
+                    <span>Décaissements mensuels du projet</span>
+                    <input type="number" id="projectMonthlyOperatingCostsInput" min="0" step="1000" value="0" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="inline-actions">
+                <button class="button button-primary" type="submit">Analyser la faisabilité</button>
+                <button class="button button-secondary" type="button" id="resetFeasibilityBtn">Réinitialiser</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="panel feasibility-results">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Synthèse</p>
+                <h3>Résultat de l’étude</h3>
+              </div>
+            </div>
+
+            <div id="feasibilityStatus" class="feasibility-status warning">
+              <h3>Étude à compléter</h3>
+              <p>Renseignez les besoins et les ressources, puis lancez l’analyse.</p>
+            </div>
+
+            <div class="feasibility-kpis">
+              <div class="feasibility-kpi">
+                <span>Budget total requis</span>
+                <strong id="totalProjectNeedResult">0 Ar</strong>
+                <small>Coûts, sécurité et trésorerie initiale</small>
+              </div>
+              <div class="feasibility-kpi">
+                <span>Ressources immédiates</span>
+                <strong id="immediateResourcesResult">0 Ar</strong>
+                <small>Financements saisis et épargne actuelle</small>
+              </div>
+              <div class="feasibility-kpi">
+                <span>Besoin restant</span>
+                <strong id="fundingGapResult">0 Ar</strong>
+                <small>Montant encore à réunir</small>
+              </div>
+              <div class="feasibility-kpi">
+                <span>Capacité d’épargne</span>
+                <strong id="monthlySavingsResult">0 Ar</strong>
+                <small>Montant mensuel mobilisable</small>
+              </div>
+              <div class="feasibility-kpi">
+                <span>Délai estimé</span>
+                <strong id="monthsToTargetResult">—</strong>
+                <small id="targetDateHint">Date d’atteinte du budget</small>
+              </div>
+              <div class="feasibility-kpi">
+                <span>Récupération simple</span>
+                <strong id="paybackResult">—</strong>
+                <small>Surplus mensuel, sans actualisation</small>
+              </div>
+            </div>
+
+            <div id="feasibilityAnalysis" class="analysis-box"></div>
+
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Nature</th>
+                  <th class="align-right">Montant</th>
+                </tr>
+              </thead>
+              <tbody id="projectCostBreakdown"></tbody>
+            </table>
+
+            <div class="method-note">
+              Cette étude mesure d’abord la capacité à financer le lancement. Elle ne remplace pas un compte de résultat,
+              un plan de trésorerie détaillé, une étude de marché ni une analyse juridique ou fiscale. Le délai de
+              récupération affiché est un payback simple : il ne tient pas compte de la valeur temps de l’argent.
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="assistantView" class="view">
+        <div class="panel ai-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Coach financier</p>
+              <h3>Okane IA</h3>
+            </div>
+          </div>
+          <p class="ai-disclaimer">
+            Experte en comptabilité (française et malgache) et en finance personnelle/entreprise.
+            Elle s'appuie sur tes données Okane Flow, mais ne remplace pas un comptable ou
+            conseiller agréé pour les décisions importantes.
+          </p>
+          <div class="ai-chat-log" id="aiChatLog"></div>
+          <div id="aiSuggestions" class="ai-suggestions">
+            <button type="button" class="ai-suggestion-chip">Analyse mon budget</button>
+            <button type="button" class="ai-suggestion-chip">Où va mon argent ?</button>
+            <button type="button" class="ai-suggestion-chip">Combien ai-je au total ?</button>
+            <button type="button" class="ai-suggestion-chip">Que puis-je améliorer ?</button>
+          </div>
+          <form id="aiChatForm" class="ai-chat-form">
+            <textarea id="aiChatInput" rows="2" placeholder="Pose ta question (ex : puis-je me verser un salaire ce mois-ci ?)" required></textarea>
+            <button type="submit" class="button button-primary" id="aiChatSubmit">Envoyer</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="settingsView" class="view">
+        <div class="settings-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Affichage</p>
+                <h3>Apparence</h3>
+              </div>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+              <button type="button" data-theme-mode="light">☀ Jour</button>
+              <button type="button" data-theme-mode="dark">☾ Nuit</button>
+              <button type="button" data-theme-mode="system">⚙ Système</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Simulation</p>
+                <h3>Paramètres financiers</h3>
+              </div>
+            </div>
+            <form id="settingsForm" class="form-stack">
+              <label class="field">
+                <span>Solde initial</span>
+                <div class="input-with-suffix">
+                  <input type="number" id="openingBalanceInput" step="1000" min="-999999999999" />
+                  <span id="currencySuffix">Ar</span>
+                </div>
+              </label>
+              <label class="field">
+                <span>Seuil d’alerte</span>
+                <div class="input-with-suffix">
+                  <input type="number" id="alertThresholdInput" step="1000" min="-999999999999" />
+                  <span>Ar</span>
+                </div>
+                <small>Une alerte est générée lorsque le solde passe sous ce montant.</small>
+              </label>
+              <label class="field">
+                <span>Devise</span>
+                <select id="currencyInput">
+                  <option value="MGA">Ariary (Ar)</option>
+                  <option value="EUR">Euro (€)</option>
+                  <option value="USD">Dollar américain ($)</option>
+                </select>
+              </label>
+              <button class="button button-primary" type="submit">Enregistrer les paramètres</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Données</p>
+                <h3>Import et export</h3>
+              </div>
+            </div>
+            <div class="form-stack">
+              <button class="button button-secondary full-width" id="exportBtn">Exporter les données </button>
+              <label class="button button-secondary full-width file-button">
+                Importer un fichier
+                <input type="file" id="importInput" accept=".json,application/json" hidden />
+              </label>
+              <button class="button button-danger full-width" id="clearDataBtn">Effacer toutes les données</button>
+            </div>
+          </article>
+
+          <article class="panel info-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">À propos</p>
+                <h3>Okane Flow V1</h3>
+              </div>
+            </div>
+            <p>
+              Okane Flow transforme des événements financiers datés en une projection quotidienne de trésorerie.
+              Les données restent uniquement de vôtre côté.
+            </p>
+            <ul class="feature-list">
+              <li>Projection jusqu’à 365 jours</li>
+              <li>Événements uniques ou récurrents</li>
+              <li>Détection du premier découvert</li>
+              <li>Calendrier mensuel</li>
+              <li>Import et export</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="eventModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Flux de trésorerie</p>
+          <h3 id="eventModalTitle">Nouvel événement</h3>
+        </div>
+        <button class="icon-button" id="closeEventModalBtn" aria-label="Fermer">×</button>
+      </div>
+
+      <form id="eventForm" class="modal-body">
+        <input type="hidden" id="eventIdInput" />
+
+        <div class="segmented-control">
+          <label>
+            <input type="radio" name="eventType" value="income" checked />
+            <span>Encaissement</span>
+          </label>
+          <label>
+            <input type="radio" name="eventType" value="expense" />
+            <span>Décaissement</span>
+          </label>
+          <label>
+            <input type="radio" name="eventType" value="transfer" />
+            <span>Transfert</span>
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field full-span">
+            <span>Libellé</span>
+            <input type="text" id="eventNameInput" maxlength="80" required placeholder="Ex. Paiement client Alpha" />
+          </label>
+
+          <label class="field">
+            <span>Montant</span>
+            <input type="number" id="eventAmountInput" min="0.01" step="0.01" required placeholder="0" />
+          </label>
+
+          <label class="field">
+            <span>Date de départ</span>
+            <input type="date" id="eventDateInput" required />
+          </label>
+
+          <label class="field" id="eventCategoryField">
+            <span>Catégorie</span>
+            <select id="eventCategoryInput"></select>
+          </label>
+
+          <label class="field" id="eventAccountField">
+            <span id="eventAccountLabel">Compte</span>
+            <select id="eventAccountInput">
+              <option value="">Aucun compte</option>
+            </select>
+          </label>
+
+          <label class="field" id="eventToAccountField" hidden>
+            <span>Compte destination</span>
+            <select id="eventToAccountInput">
+              <option value="">Sélectionner…</option>
+            </select>
+          </label>
+
+          <label class="field" id="eventFeeField" hidden>
+            <span>Frais de transfert</span>
+            <input type="number" id="eventFeeInput" min="0" step="0.01" placeholder="0" />
+          </label>
+
+          <label class="field">
+            <span>Statut</span>
+            <select id="eventStatusInput">
+              <option value="planned">Prévu</option>
+              <option value="confirmed">Confirmé</option>
+              <option value="paid">Réalisé</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Récurrence</span>
+            <select id="eventRecurrenceInput">
+              <option value="none">Aucune</option>
+              <option value="weekly">Chaque semaine</option>
+              <option value="monthly">Chaque mois</option>
+              <option value="quarterly">Chaque trimestre</option>
+              <option value="yearly">Chaque année</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Date de fin</span>
+            <input type="date" id="eventEndDateInput" />
+            <small>Optionnelle pour les événements récurrents.</small>
+          </label>
+
+          <label class="field full-span">
+            <span>Notes</span>
+            <textarea id="eventNotesInput" rows="3" maxlength="250" placeholder="Informations complémentaires"></textarea>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary" id="cancelEventBtn">Annuler</button>
+          <button type="submit" class="button button-primary">Enregistrer l’événement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="accountModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Comptes</p>
+          <h3 id="accountModalTitle">Nouveau compte</h3>
+        </div>
+        <button class="icon-button" id="closeAccountModalBtn" aria-label="Fermer">×</button>
+      </div>
+      <form id="accountForm" class="modal-body">
+        <input type="hidden" id="accountIdInput" />
+        <div class="form-grid">
+          <label class="field full-span">
+            <span>Nom du compte</span>
+            <input type="text" id="accountNameInput" maxlength="60" required placeholder="Ex. BNI, MVola, Espèces…" />
+          </label>
+          <label class="field">
+            <span>Type</span>
+            <select id="accountTypeInput">
+              <option value="bank">Banque</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="cash">Espèces</option>
+              <option value="card">Carte</option>
+              <option value="savings">Épargne</option>
+              <option value="other">Autre</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Devise</span>
+            <select id="accountCurrencyInput">
+              <option value="MGA">Ariary (MGA)</option>
+              <option value="EUR">Euro (EUR)</option>
+              <option value="USD">Dollar (USD)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Solde initial</span>
+            <input type="number" id="accountInitialBalanceInput" step="0.01" placeholder="0" />
+          </label>
+          <label class="field">
+            <span>Statut</span>
+            <select id="accountActiveInput">
+              <option value="true">Actif</option>
+              <option value="false">Inactif</option>
+            </select>
+          </label>
+          <label class="field full-span">
+            <span>Description (facultatif)</span>
+            <input type="text" id="accountDescriptionInput" maxlength="160" placeholder="Ex. Compte principal" />
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary" id="cancelAccountBtn">Annuler</button>
+          <button type="submit" class="button button-primary">Enregistrer le compte</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="liabilityModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="liabilityModalTitle">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Passifs</p>
+          <h3 id="liabilityModalTitle">Nouveau passif</h3>
+        </div>
+        <button class="icon-button" id="closeLiabilityModalBtn" aria-label="Fermer">×</button>
+      </div>
+      <form id="liabilityForm" class="modal-body">
+        <input type="hidden" id="liabilityIdInput" />
+        <div class="form-grid">
+          <label class="field full-span">
+            <span>Nom (dette, crédit, emprunt…)</span>
+            <input type="text" id="liabilityNameInput" maxlength="60" required placeholder="Ex. Crédit véhicule" />
+          </label>
+          <label class="field">
+            <span>Montant restant dû</span>
+            <input type="number" id="liabilityAmountInput" min="0" step="0.01" required placeholder="0" />
+          </label>
+          <label class="field">
+            <span>Échéance (facultatif)</span>
+            <input type="date" id="liabilityDueDateInput" />
+          </label>
+          <label class="field full-span">
+            <span>Notes</span>
+            <input type="text" id="liabilityNotesInput" maxlength="160" placeholder="Informations complémentaires" />
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary" id="cancelLiabilityBtn">Annuler</button>
+          <button type="submit" class="button button-primary">Enregistrer le passif</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "okaneFlowDataV1";
+  const TOKEN_KEY = "okaneFlowToken";
+  const API_URL = "https://okane-flow-backend.reichenbakmh.workers.dev";
+
+  const defaultState = {
+    settings: {
+      openingBalance: 1500000,
+      alertThreshold: 300000,
+      currency: "MGA",
+      forecastDays: 90
+    },
+    events: [],
+    feasibility: {
+      projectName: "",
+      profile: "personal",
+      desiredStartDate: "",
+      costs: [
+        { id: "cost-default-1", name: "Équipement ou investissement initial", category: "Investissement", timing: "Démarrage", amount: 0 }
+      ],
+      funding: [
+        { id: "fund-default-1", name: "Apport personnel", type: "Apport", amount: 0 }
+      ],
+      workingCapital: 0,
+      contingencyRate: 10,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      manualMonthlySavings: 0,
+      currentSavings: 0,
+      projectMonthlyRevenue: 0,
+      projectMonthlyOperatingCosts: 0
+    },
+    accounts: [],
+    liabilities: []
+  };
+
+  const accountTypeLabels = {
+    bank: "Banque",
+    mobile_money: "Mobile Money",
+    cash: "Espèces",
+    card: "Carte",
+    savings: "Épargne",
+    other: "Autre"
+  };
+
+  const accountTypeIcons = {
+    bank: "🏦",
+    mobile_money: "📱",
+    cash: "💵",
+    card: "💳",
+    savings: "🐖",
+    other: "◈"
+  };
+
+  const categories = {
+    income: [
+      "Ventes",
+      "Paiements clients",
+      "Salaire",
+      "Apport",
+      "Emprunt",
+      "Remboursement",
+      "Autres encaissements"
+    ],
+    expense: [
+      "Achats",
+      "Fournisseurs",
+      "Loyer",
+      "Salaires",
+      "Impôts et taxes",
+      "TVA",
+      "Abonnements",
+      "Transport",
+      "Énergie",
+      "Autres décaissements"
+    ],
+    transfer: [
+      "Transfert interne"
+    ]
+  };
+
+  const recurrenceLabels = {
+    none: "Unique",
+    weekly: "Hebdomadaire",
+    monthly: "Mensuelle",
+    quarterly: "Trimestrielle",
+    yearly: "Annuelle"
+  };
+
+  const statusLabels = {
+    planned: "Prévu",
+    confirmed: "Confirmé",
+    paid: "Réalisé"
+  };
+
+  const pageMeta = {
+    dashboard: ["Vue générale", "Tableau de bord"],
+    accounts: ["Argent disponible", "Comptes"],
+    budget: ["Suivi mensuel", "Budget"],
+    transactions: ["Gestion des flux", "Événements"],
+    calendar: ["Chronologie", "Calendrier"],
+    feasibility: ["Décision financière", "Étude de faisabilité"],
+    assistant: ["Coach financier", "Okane IA"],
+    settings: ["Configuration", "Paramètres"]
+  };
+
+  let state = structuredClone(defaultState);
+  let chart = null;
+  let currentCalendarDate = startOfMonth(new Date());
+  let syncTimer = null;
+  let budgetMonthOffset = 0;
+  let chartResizeObserver = null;
+
+  const els = {};
+  let lastChartProjection = [];
+
+  document.addEventListener("DOMContentLoaded", bootstrap);
+
+  async function bootstrap() {
+    cacheElements();
+    bindEvents();
+    bindAuthEvents();
+    bindThemeEvents();
+    bindAiChatEvents();
+    setDefaultEventDate();
+    populateCategoryOptions("income");
+    initPWA();
+    bindViewportEvents();
+
+    const token = getToken();
+    if (token) {
+      await resumeSession(token);
+    } else {
+      showAuth("login");
+    }
+  }
+
+  function startApp() {
+    els.authOverlay.hidden = true;
+    els.appShell.hidden = false;
+    lockPortrait();
+    syncSettingsForm();
+    renderAll();
+  }
+
+  function lockPortrait() {
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("portrait").catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  function bindViewportEvents() {
+    const refreshChart = () => {
+      if (chart && typeof chart.resize === "function") {
+        chart.resize();
+      }
+    };
+
+    window.addEventListener("resize", () => {
+      requestAnimationFrame(refreshChart);
+    });
+
+    window.addEventListener("orientationchange", () => {
+      setTimeout(refreshChart, 200);
+    });
+  }
+
+  // ---------- Authentification ----------
+
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  function setToken(token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+
+  function showAuth(mode) {
+    els.appShell.hidden = true;
+    els.authOverlay.hidden = false;
+    setAuthTab(mode);
+  }
+
+  function setAuthTab(mode) {
+    const isLogin = mode === "login";
+    els.authTabLogin.classList.toggle("active", isLogin);
+    els.authTabRegister.classList.toggle("active", !isLogin);
+    els.loginForm.hidden = !isLogin;
+    els.registerForm.hidden = isLogin;
+    els.loginError.textContent = "";
+    els.registerError.textContent = "";
+  }
+
+  async function apiRequest(path, options = {}) {
+    const token = getToken();
+    const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+    let body = null;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    if (!response.ok) {
+      const err = new Error(body?.error || "Une erreur est survenue.");
+      err.status = response.status;
+      throw err;
+    }
+    return body;
+  }
+
+  async function resumeSession(token) {
+    try {
+      const result = await apiRequest("/api/data", { method: "GET" });
+      state = sanitizeState(result.data);
+      startApp();
+      setSyncStatus("Synchronisé avec le cloud", false);
+    } catch (err) {
+      if (err.status === 401) {
+        clearToken();
+        showAuth("login");
+      } else {
+        state = loadState();
+        startApp();
+        setSyncStatus("Hors ligne — dernière copie locale", true);
+      }
+    }
+  }
+
+  function bindAuthEvents() {
+    els.authTabLogin.addEventListener("click", () => setAuthTab("login"));
+    els.authTabRegister.addEventListener("click", () => setAuthTab("register"));
+
+    els.loginForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      els.loginError.textContent = "";
+      els.loginSubmit.disabled = true;
+      try {
+        const result = await apiRequest("/api/login", {
+          method: "POST",
+          body: JSON.stringify({
+            email: els.loginEmail.value.trim(),
+            password: els.loginPassword.value
+          })
+        });
+        setToken(result.token);
+        await resumeSession(result.token);
+      } catch (err) {
+        els.loginError.textContent = err.message;
+      } finally {
+        els.loginSubmit.disabled = false;
+      }
+    });
+
+    els.registerForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      els.registerError.textContent = "";
+      els.registerSubmit.disabled = true;
+      try {
+        const result = await apiRequest("/api/register", {
+          method: "POST",
+          body: JSON.stringify({
+            email: els.registerEmail.value.trim(),
+            password: els.registerPassword.value
+          })
+        });
+        setToken(result.token);
+        await resumeSession(result.token);
+      } catch (err) {
+        els.registerError.textContent = err.message;
+      } finally {
+        els.registerSubmit.disabled = false;
+      }
+    });
+
+    els.logoutBtn.addEventListener("click", () => {
+      clearToken();
+      state = structuredClone(defaultState);
+      showAuth("login");
+    });
+  }
+
+  function setSyncStatus(text, isError) {
+    els.syncStatusText.textContent = text;
+    els.syncStatusText.style.color = isError ? "var(--danger)" : "";
+  }
+
+  // ---------- Thème (jour / nuit / système) ----------
+
+  const THEME_MODE_KEY = "okaneFlowThemeMode";
+  const darkMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  function getThemeMode() {
+    return localStorage.getItem(THEME_MODE_KEY) || "system";
+  }
+
+  function resolveTheme(mode) {
+    return mode === "system" ? (darkMediaQuery.matches ? "dark" : "light") : mode;
+  }
+
+  function applyTheme(mode) {
+    document.documentElement.setAttribute("data-theme", resolveTheme(mode));
+    els.themeToggle.querySelectorAll("button").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.themeMode === mode);
+    });
+    if (chart && typeof chart.resize === "function" && lastChartProjection.length) {
+      setTimeout(() => chart.resize(), 0);
+    }
+  }
+
+  function setThemeMode(mode) {
+    localStorage.setItem(THEME_MODE_KEY, mode);
+    applyTheme(mode);
+  }
+
+  function bindThemeEvents() {
+    els.themeToggle.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => setThemeMode(btn.dataset.themeMode));
+    });
+    darkMediaQuery.addEventListener("change", () => {
+      if (getThemeMode() === "system") applyTheme("system");
+    });
+    applyTheme(getThemeMode());
+  }
+
+  // ---------- Assistante IA ----------
+
+  let aiChatHistory = [];
+
+  function buildAIContext() {
+    const totalAssets = computeTotalAvoirs();
+    const totalLiabilities = computeTotalLiabilities();
+    const monthDate = startOfMonth(new Date());
+    const currentMonth = computeMonthMetrics(monthDate, false);
+    const previousMonth = computeMonthMetrics(addMonths(monthDate, -1), false);
+
+    return {
+      devise: state.settings.currency,
+      totalAvoirs: totalAssets,
+      totalPassifs: totalLiabilities,
+      valeurNette: totalAssets - totalLiabilities,
+      comptes: state.accounts.filter(a => a.active).map(a => ({
+        nom: a.name,
+        type: accountTypeLabels[a.type],
+        solde: computeAccountBalance(a)
+      })),
+      budgetMoisEnCours: currentMonth,
+      budgetMoisPrecedent: previousMonth,
+      soldeInitialGlobal: state.settings.openingBalance,
+      seuilAlerte: state.settings.alertThreshold
+    };
+  }
+
+  function bindAiChatEvents() {
+    els.aiSuggestions?.querySelectorAll(".ai-suggestion-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        els.aiChatInput.value = chip.textContent;
+        els.aiChatForm.requestSubmit();
+      });
+    });
+
+    els.aiChatForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const text = els.aiChatInput.value.trim();
+      if (!text) return;
+
+      addAiMessage("user", text);
+      aiChatHistory.push({ role: "user", content: text });
+      els.aiChatInput.value = "";
+      els.aiChatSubmit.disabled = true;
+
+      const pending = addAiMessage("assistant", "Analyse de tes données financières…", true);
+
+      try {
+        const result = await apiRequest("/api/ai-chat", {
+          method: "POST",
+          body: JSON.stringify({ messages: aiChatHistory, context: buildAIContext() })
+        });
+        pending.remove();
+        addAiMessage("assistant", result.reply);
+        aiChatHistory.push({ role: "assistant", content: result.reply });
+      } catch (err) {
+        pending.remove();
+        addAiMessage("assistant", `Désolée, une erreur est survenue : ${err.message}`);
+      } finally {
+        els.aiChatSubmit.disabled = false;
+      }
+    });
+
+    els.aiChatInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        els.aiChatForm.requestSubmit();
+      }
+    });
+  }
+
+  function addAiMessage(role, text, pending = false) {
+    const bubble = document.createElement("div");
+    bubble.className = `ai-message ${role}${pending ? " pending" : ""}`;
+    bubble.textContent = text;
+    els.aiChatLog.appendChild(bubble);
+    els.aiChatLog.scrollTop = els.aiChatLog.scrollHeight;
+    return bubble;
+  }
+
+
+  let deferredInstallPrompt = null;
+
+  function initPWA() {
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(error => {
+          console.error("Échec d’enregistrement du service worker :", error);
+        });
+      });
+    }
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      els.installAppBtn.hidden = false;
+    });
+
+    els.installAppBtn.addEventListener("click", async () => {
+      if (!deferredInstallPrompt) {
+        showToast("Utilisez le menu du navigateur puis « Installer l’application ».");
+        return;
+      }
+
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      els.installAppBtn.hidden = true;
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      els.installAppBtn.hidden = true;
+      showToast("Okane Flow est installée.");
+    });
+
+    const updateOnlineStatus = () => {
+      const existing = document.getElementById("offlineIndicator");
+      if (navigator.onLine) {
+        existing?.remove();
+        return;
+      }
+
+      if (!existing) {
+        const indicator = document.createElement("div");
+        indicator.id = "offlineIndicator";
+        indicator.className = "offline-indicator";
+        indicator.textContent = "Mode hors ligne";
+        document.body.appendChild(indicator);
+      }
+    };
+
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    updateOnlineStatus();
+  }
+
+  function cacheElements() {
+    [
+      "sidebar", "sidebarToggle", "pageEyebrow", "pageTitle", "openEventModalBtn", "installAppBtn",
+      "loadDemoBtn", "forecastRange", "forecastEndLabel", "projectedBalanceHero",
+      "heroStatusText", "openingBalanceMetric", "incomeMetric", "expenseMetric",
+      "endingBalanceMetric", "endingBalanceHint", "cashflowChart", "chartEmptyState",
+      "riskLevelBadge", "riskSummary", "riskDetails", "upcomingEvents",
+      "categoryBreakdown", "searchInput", "typeFilter", "statusFilter",
+      "eventsTableBody", "eventCountBadge", "tableEmptyState", "calendarMonthLabel",
+      "calendarGrid", "prevMonthBtn", "nextMonthBtn", "todayBtn", "settingsForm",
+      "openingBalanceInput", "alertThresholdInput", "currencyInput", "currencySuffix",
+      "exportBtn", "importInput", "clearDataBtn",
+      "feasibilityForm", "loadFeasibilityDemoBtn", "feasibilityAccountsSummary", "projectNameInput", "projectProfileInput",
+      "desiredStartDateInput", "projectCostsList", "addProjectCostBtn", "workingCapitalInput",
+      "contingencyRateInput", "projectFundingList", "addProjectFundingBtn", "monthlyIncomeInput",
+      "monthlyExpensesInput", "manualMonthlySavingsInput", "currentSavingsInput",
+      "projectMonthlyRevenueInput", "projectMonthlyOperatingCostsInput", "resetFeasibilityBtn",
+      "feasibilityStatus", "totalProjectNeedResult", "immediateResourcesResult", "fundingGapResult",
+      "monthlySavingsResult", "monthsToTargetResult", "targetDateHint", "paybackResult",
+      "feasibilityAnalysis", "projectCostBreakdown",
+      "eventModal", "eventModalTitle",
+      "closeEventModalBtn", "cancelEventBtn", "eventForm", "eventIdInput",
+      "eventNameInput", "eventAmountInput", "eventDateInput", "eventCategoryInput",
+      "eventCategoryField", "eventAccountField", "eventAccountLabel", "eventAccountInput",
+      "eventToAccountField", "eventToAccountInput", "eventFeeField", "eventFeeInput",
+      "eventStatusInput", "eventRecurrenceInput", "eventEndDateInput",
+      "eventNotesInput", "toastContainer",
+      "accountsGrid", "totalAssetsMetric", "totalLiabilitiesMetric", "netWorthMetric", "dashboardTotalAssetsMetric",
+      "liabilitiesList", "addAccountBtn", "addLiabilityBtn", "accountsEmptyState",
+      "accountModal", "accountModalTitle", "accountForm", "accountIdInput", "accountNameInput",
+      "accountTypeInput", "accountInitialBalanceInput", "accountCurrencyInput",
+      "accountDescriptionInput", "accountActiveInput", "closeAccountModalBtn", "cancelAccountBtn",
+      "liabilityModal", "liabilityModalTitle", "liabilityForm", "liabilityIdInput",
+      "liabilityNameInput", "liabilityAmountInput", "liabilityDueDateInput", "liabilityNotesInput",
+      "closeLiabilityModalBtn", "cancelLiabilityBtn",
+      "budgetMonthLabel", "prevBudgetMonthBtn", "nextBudgetMonthBtn", "currentBudgetMonthBtn",
+      "budgetStatusBadge", "budgetIncomeMetric", "budgetExpenseMetric", "budgetSavingsMetric",
+      "budgetRemainderMetric", "budgetComparisonBody", "whereMoneyGoesBar", "whereMoneyGoesLegend",
+      "budgetRealizedHint",
+      "authOverlay", "appShell", "authTabLogin", "authTabRegister",
+      "loginForm", "loginEmail", "loginPassword", "loginSubmit", "loginError",
+      "registerForm", "registerEmail", "registerPassword", "registerSubmit", "registerError",
+      "logoutBtn", "syncStatusText", "themeToggle",
+      "aiChatLog", "aiChatForm", "aiChatInput", "aiChatSubmit", "aiSuggestions"
+    ].forEach(id => {
+      els[id] = document.getElementById(id);
+    });
+
+    els.navItems = Array.from(document.querySelectorAll(".nav-item"));
+    els.views = Array.from(document.querySelectorAll(".view"));
+    els.switchViewButtons = Array.from(document.querySelectorAll("[data-switch-view]"));
+  }
+
+  function bindEvents() {
+    els.navItems.forEach(btn => btn.addEventListener("click", () => switchView(btn.dataset.view)));
+    els.switchViewButtons.forEach(btn => btn.addEventListener("click", () => switchView(btn.dataset.switchView)));
+
+    els.sidebarToggle.addEventListener("click", () => els.sidebar.classList.toggle("open"));
+    els.openEventModalBtn.addEventListener("click", () => openEventModal());
+    els.closeEventModalBtn.addEventListener("click", closeEventModal);
+    els.cancelEventBtn.addEventListener("click", closeEventModal);
+    els.eventModal.addEventListener("click", e => {
+      if (e.target === els.eventModal) closeEventModal();
+    });
+
+    document.querySelectorAll('input[name="eventType"]').forEach(input => {
+      input.addEventListener("change", () => {
+        populateCategoryOptions(input.value);
+        syncEventFormFieldsForType(input.value);
+      });
+    });
+
+    els.eventForm.addEventListener("submit", saveEvent);
+    els.forecastRange.addEventListener("change", () => {
+      state.settings.forecastDays = Number(els.forecastRange.value);
+      persist();
+      renderAll();
+    });
+
+    [els.searchInput, els.typeFilter, els.statusFilter].forEach(el => {
+      el.addEventListener("input", renderEventsTable);
+      el.addEventListener("change", renderEventsTable);
+    });
+
+    els.settingsForm.addEventListener("submit", saveSettings);
+    els.loadDemoBtn.addEventListener("click", loadDemoData);
+    els.exportBtn.addEventListener("click", exportData);
+    els.importInput.addEventListener("change", importData);
+    els.clearDataBtn.addEventListener("click", clearData);
+
+    els.feasibilityForm.addEventListener("submit", e => {
+      e.preventDefault();
+      saveFeasibilityInputs();
+      renderFeasibility();
+      showToast("Étude de faisabilité mise à jour.");
+    });
+    els.addProjectCostBtn.addEventListener("click", () => addCostRow());
+    els.addProjectFundingBtn.addEventListener("click", () => addFundingRow());
+    els.loadFeasibilityDemoBtn.addEventListener("click", loadFeasibilityDemo);
+    els.resetFeasibilityBtn.addEventListener("click", resetFeasibility);
+    els.feasibilityForm.addEventListener("input", () => {
+      saveFeasibilityInputs(false);
+      renderFeasibility();
+    });
+    els.feasibilityForm.addEventListener("change", () => {
+      saveFeasibilityInputs(false);
+      renderFeasibility();
+    });
+
+    els.prevMonthBtn.addEventListener("click", () => {
+      currentCalendarDate = addMonths(currentCalendarDate, -1);
+      renderCalendar();
+    });
+
+    els.nextMonthBtn.addEventListener("click", () => {
+      currentCalendarDate = addMonths(currentCalendarDate, 1);
+      renderCalendar();
+    });
+
+    els.todayBtn.addEventListener("click", () => {
+      currentCalendarDate = startOfMonth(new Date());
+      renderCalendar();
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && els.eventModal.classList.contains("open")) closeEventModal();
+      if (e.key === "Escape" && els.accountModal.classList.contains("open")) closeAccountModal();
+      if (e.key === "Escape" && els.liabilityModal.classList.contains("open")) closeLiabilityModal();
+    });
+
+    els.addAccountBtn.addEventListener("click", () => openAccountModal());
+    els.closeAccountModalBtn.addEventListener("click", closeAccountModal);
+    els.cancelAccountBtn.addEventListener("click", closeAccountModal);
+    els.accountModal.addEventListener("click", e => {
+      if (e.target === els.accountModal) closeAccountModal();
+    });
+    els.accountForm.addEventListener("submit", saveAccount);
+
+    els.addLiabilityBtn.addEventListener("click", () => openLiabilityModal());
+    els.closeLiabilityModalBtn.addEventListener("click", closeLiabilityModal);
+    els.cancelLiabilityBtn.addEventListener("click", closeLiabilityModal);
+    els.liabilityModal.addEventListener("click", e => {
+      if (e.target === els.liabilityModal) closeLiabilityModal();
+    });
+    els.liabilityForm.addEventListener("submit", saveLiability);
+
+    els.prevBudgetMonthBtn.addEventListener("click", () => {
+      budgetMonthOffset -= 1;
+      renderBudgetView();
+    });
+    els.nextBudgetMonthBtn.addEventListener("click", () => {
+      budgetMonthOffset += 1;
+      renderBudgetView();
+    });
+    els.currentBudgetMonthBtn.addEventListener("click", () => {
+      budgetMonthOffset = 0;
+      renderBudgetView();
+    });
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return structuredClone(defaultState);
+      const parsed = JSON.parse(raw);
+      return sanitizeState(parsed);
+    } catch {
+      return structuredClone(defaultState);
+    }
+  }
+
+  function sanitizeState(data) {
+    return {
+      settings: {
+        openingBalance: finiteNumber(data?.settings?.openingBalance, defaultState.settings.openingBalance),
+        alertThreshold: finiteNumber(data?.settings?.alertThreshold, defaultState.settings.alertThreshold),
+        currency: ["MGA", "EUR", "USD"].includes(data?.settings?.currency) ? data.settings.currency : "MGA",
+        forecastDays: [30, 60, 90, 180, 365].includes(Number(data?.settings?.forecastDays))
+          ? Number(data.settings.forecastDays)
+          : 90
+      },
+      events: Array.isArray(data?.events)
+        ? data.events.map(sanitizeEvent).filter(Boolean)
+        : [],
+      feasibility: sanitizeFeasibility(data?.feasibility),
+      accounts: Array.isArray(data?.accounts)
+        ? data.accounts.map(sanitizeAccount).filter(Boolean)
+        : [],
+      liabilities: Array.isArray(data?.liabilities)
+        ? data.liabilities.map(sanitizeLiability).filter(Boolean)
+        : []
+    };
+  }
+
+  function sanitizeAccount(account) {
+    if (!account || !account.id || !account.name) return null;
+    return {
+      id: String(account.id),
+      name: String(account.name).slice(0, 60),
+      type: Object.keys(accountTypeLabels).includes(account.type) ? account.type : "other",
+      initialBalance: finiteNumber(account.initialBalance, 0),
+      currency: ["MGA", "EUR", "USD"].includes(account.currency) ? account.currency : state?.settings?.currency || "MGA",
+      description: String(account.description || "").slice(0, 160),
+      color: String(account.color || "#1d5b4f").slice(0, 20),
+      active: account.active !== false,
+      createdAt: account.createdAt || new Date().toISOString()
+    };
+  }
+
+  function sanitizeLiability(liability) {
+    if (!liability || !liability.id || !liability.name) return null;
+    return {
+      id: String(liability.id),
+      name: String(liability.name).slice(0, 60),
+      amount: Math.max(0, finiteNumber(liability.amount, 0)),
+      dueDate: liability.dueDate && isValidDateString(liability.dueDate) ? liability.dueDate : "",
+      notes: String(liability.notes || "").slice(0, 160),
+      createdAt: liability.createdAt || new Date().toISOString()
+    };
+  }
+
+
+  function sanitizeFeasibility(value) {
+    const source = value || defaultState.feasibility;
+    const cleanRows = (rows, kind) => Array.isArray(rows) && rows.length
+      ? rows.map(row => ({
+          id: String(row?.id || generateId()),
+          name: String(row?.name || "").slice(0, 90),
+          category: kind === "cost" ? String(row?.category || "Autre") : undefined,
+          timing: kind === "cost" ? String(row?.timing || "Démarrage") : undefined,
+          type: kind === "funding" ? String(row?.type || "Autre") : undefined,
+          amount: Math.max(0, finiteNumber(row?.amount, 0))
+        }))
+      : structuredClone(kind === "cost" ? defaultState.feasibility.costs : defaultState.feasibility.funding);
+
+    return {
+      projectName: String(source.projectName || "").slice(0, 90),
+      profile: ["personal", "business", "association"].includes(source.profile) ? source.profile : "personal",
+      desiredStartDate: source.desiredStartDate && isValidDateString(source.desiredStartDate) ? source.desiredStartDate : "",
+      costs: cleanRows(source.costs, "cost"),
+      funding: cleanRows(source.funding, "funding"),
+      workingCapital: Math.max(0, finiteNumber(source.workingCapital, 0)),
+      contingencyRate: Math.min(100, Math.max(0, finiteNumber(source.contingencyRate, 10))),
+      monthlyIncome: Math.max(0, finiteNumber(source.monthlyIncome, 0)),
+      monthlyExpenses: Math.max(0, finiteNumber(source.monthlyExpenses, 0)),
+      manualMonthlySavings: Math.max(0, finiteNumber(source.manualMonthlySavings, 0)),
+      currentSavings: Math.max(0, finiteNumber(source.currentSavings, 0)),
+      projectMonthlyRevenue: Math.max(0, finiteNumber(source.projectMonthlyRevenue, 0)),
+      projectMonthlyOperatingCosts: Math.max(0, finiteNumber(source.projectMonthlyOperatingCosts, 0))
+    };
+  }
+
+  function sanitizeEvent(event) {
+    if (!event || !event.id || !event.name || !event.date) return null;
+    const amount = Math.abs(finiteNumber(event.amount, 0));
+    if (amount <= 0) return null;
+
+    return {
+      id: String(event.id),
+      name: String(event.name).slice(0, 80),
+      type: ["expense", "transfer"].includes(event.type) ? event.type : "income",
+      amount,
+      date: isValidDateString(event.date) ? event.date : toISODate(new Date()),
+      endDate: event.endDate && isValidDateString(event.endDate) ? event.endDate : "",
+      category: String(event.category || "Autres"),
+      status: ["planned", "confirmed", "paid"].includes(event.status) ? event.status : "planned",
+      recurrence: ["none", "weekly", "monthly", "quarterly", "yearly"].includes(event.recurrence)
+        ? event.recurrence
+        : "none",
+      notes: String(event.notes || "").slice(0, 250),
+      accountId: event.accountId ? String(event.accountId) : "",
+      toAccountId: event.type === "transfer" && event.toAccountId ? String(event.toAccountId) : "",
+      transferFee: Math.max(0, finiteNumber(event.transferFee, 0)),
+      createdAt: event.createdAt || new Date().toISOString()
+    };
+  }
+
+  function persist() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    queueSync();
+  }
+
+  function queueSync() {
+    if (!getToken()) return;
+    clearTimeout(syncTimer);
+    setSyncStatus("Enregistrement…", false);
+    syncTimer = setTimeout(syncNow, 700);
+  }
+
+  async function syncNow() {
+    try {
+      await apiRequest("/api/data", { method: "PUT", body: JSON.stringify(state) });
+      setSyncStatus("Synchronisé avec le cloud", false);
+    } catch {
+      setSyncStatus("Hors ligne — sauvegardé localement", true);
+    }
+  }
+
+  function renderAll() {
+    els.forecastRange.value = String(state.settings.forecastDays);
+    syncSettingsForm();
+    renderDashboard();
+    renderAccounts();
+    renderBudgetView();
+    renderEventsTable();
+    renderCalendar();
+    renderFeasibilityForm();
+    renderFeasibility();
+  }
+
+  function renderDashboard() {
+    const projection = buildProjection(state.settings.forecastDays);
+    const summary = summarizeProjection(projection);
+
+    els.openingBalanceMetric.textContent = formatMoney(state.settings.openingBalance);
+    els.incomeMetric.textContent = formatMoney(summary.totalIncome);
+    els.expenseMetric.textContent = formatMoney(summary.totalExpense);
+    els.endingBalanceMetric.textContent = formatMoney(summary.endingBalance);
+    els.projectedBalanceHero.textContent = formatMoney(summary.endingBalance);
+    els.forecastEndLabel.textContent = formatDate(summary.endDate);
+    els.endingBalanceHint.textContent = `${projection.length} jours simulés`;
+
+    if (!state.events.length) {
+      els.heroStatusText.textContent = "Ajoutez vos premiers événements pour commencer la simulation.";
+    } else if (summary.firstNegativeDate) {
+      els.heroStatusText.textContent = `Risque de découvert à partir du ${formatDate(summary.firstNegativeDate)}.`;
+    } else if (summary.minimumBalance < state.settings.alertThreshold) {
+      els.heroStatusText.textContent = "La trésorerie reste positive mais franchit votre seuil d’alerte.";
+    } else {
+      els.heroStatusText.textContent = "La trésorerie prévisionnelle reste au-dessus du seuil d’alerte.";
+    }
+
+    renderChart(projection);
+    renderRisk(summary);
+    renderUpcomingEvents();
+    renderCategoryBreakdown();
+  }
+
+  function buildProjection(days) {
+    const start = startOfDay(new Date());
+    const end = addDays(start, days - 1);
+    const occurrences = expandOccurrences(start, end);
+    const byDate = new Map();
+
+    occurrences.forEach(occ => {
+      const key = toISODate(occ.date);
+      if (!byDate.has(key)) byDate.set(key, []);
+      byDate.get(key).push(occ);
+    });
+
+    let balance = state.settings.openingBalance;
+    const rows = [];
+
+    for (let i = 0; i < days; i++) {
+      const date = addDays(start, i);
+      const key = toISODate(date);
+      const dayEvents = byDate.get(key) || [];
+      let income = 0;
+      let expense = 0;
+
+      dayEvents.forEach(occ => {
+        if (occ.type === "income") income += occ.amount;
+        else if (occ.type === "expense") expense += occ.amount;
+        // Les transferts entre comptes n'affectent pas le cashflow global.
+      });
+
+      balance += income - expense;
+      rows.push({ date, balance, income, expense, events: dayEvents });
+    }
+
+    return rows;
+  }
+
+  function summarizeProjection(projection) {
+    const totalIncome = projection.reduce((sum, row) => sum + row.income, 0);
+    const totalExpense = projection.reduce((sum, row) => sum + row.expense, 0);
+    const endingBalance = projection.length ? projection[projection.length - 1].balance : state.settings.openingBalance;
+    const minimumRow = projection.reduce((min, row) => row.balance < min.balance ? row : min, projection[0] || {
+      balance: state.settings.openingBalance,
+      date: new Date()
+    });
+    const firstNegative = projection.find(row => row.balance < 0);
+    const firstBelowThreshold = projection.find(row => row.balance < state.settings.alertThreshold);
+
+    return {
+      totalIncome,
+      totalExpense,
+      endingBalance,
+      minimumBalance: minimumRow.balance,
+      minimumBalanceDate: minimumRow.date,
+      firstNegativeDate: firstNegative?.date || null,
+      firstBelowThresholdDate: firstBelowThreshold?.date || null,
+      endDate: projection[projection.length - 1]?.date || new Date()
+    };
+  }
+
+  function expandOccurrences(rangeStart, rangeEnd) {
+    const occurrences = [];
+
+    state.events.forEach(event => {
+      const start = parseISODate(event.date);
+      const eventEnd = event.endDate ? parseISODate(event.endDate) : rangeEnd;
+
+      if (event.recurrence === "none") {
+        if (start >= rangeStart && start <= rangeEnd) {
+          occurrences.push({ ...event, date: start });
+        }
+        return;
+      }
+
+      let cursor = new Date(start);
+      let guard = 0;
+
+      while (cursor <= rangeEnd && cursor <= eventEnd && guard < 1000) {
+        if (cursor >= rangeStart) occurrences.push({ ...event, date: new Date(cursor) });
+        cursor = nextOccurrence(cursor, event.recurrence);
+        guard++;
+      }
+    });
+
+    return occurrences.sort((a, b) => a.date - b.date);
+  }
+
+  function nextOccurrence(date, recurrence) {
+    switch (recurrence) {
+      case "weekly": return addDays(date, 7);
+      case "monthly": return addMonthsPreserveDay(date, 1);
+      case "quarterly": return addMonthsPreserveDay(date, 3);
+      case "yearly": return addYearsPreserveDay(date, 1);
+      default: return new Date(date);
+    }
+  }
+
+  function renderChart(projection) {
+    lastChartProjection = Array.isArray(projection) ? projection.slice() : [];
+
+    if (!lastChartProjection.length) {
+      els.chartEmptyState.classList.add("show");
+      clearCashflowChart();
+      return;
+    }
+
+    els.chartEmptyState.classList.remove("show");
+    els.cashflowChart.style.display = "block";
+
+    if (!chartResizeObserver && window.ResizeObserver && els.cashflowChart.parentElement) {
+      chartResizeObserver = new ResizeObserver(() => {
+        if (lastChartProjection.length) drawCashflowChart(lastChartProjection);
+      });
+      chartResizeObserver.observe(els.cashflowChart.parentElement);
+    }
+
+    if (!chart) {
+      chart = {
+        resize: () => {
+          if (lastChartProjection.length) {
+            drawCashflowChart(lastChartProjection);
+          }
+        },
+        update: () => {
+          if (lastChartProjection.length) {
+            drawCashflowChart(lastChartProjection);
+          }
+        },
+        destroy: () => {
+          clearCashflowChart();
+        }
+      };
+    }
+
+    drawCashflowChart(lastChartProjection);
+  }
+
+  function clearCashflowChart() {
+    const canvas = els.cashflowChart;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.clearRect(0, 0, width, height);
+  }
+
+  function drawCashflowChart(projection) {
+    const canvas = els.cashflowChart;
+    if (!canvas || !projection.length) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+    const cssWidth = Math.max(320, canvas.parentElement?.clientWidth || canvas.clientWidth || 320);
+    const cssHeight = Math.max(280, canvas.parentElement?.clientHeight || canvas.clientHeight || 360);
+    const pixelWidth = Math.round(cssWidth * dpr);
+    const pixelHeight = Math.round(cssHeight * dpr);
+
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    const styles = getComputedStyle(document.documentElement);
+    const colors = {
+      primary: styles.getPropertyValue("--primary").trim() || "#1d5b4f",
+      primaryDark: styles.getPropertyValue("--primary-dark").trim() || "#15463d",
+      danger: styles.getPropertyValue("--danger").trim() || "#c84747",
+      line: styles.getPropertyValue("--line").trim() || "#e4e9ee",
+      muted: styles.getPropertyValue("--muted").trim() || "#6d7a86",
+      text: styles.getPropertyValue("--text").trim() || "#17212b",
+      surfaceSoft: styles.getPropertyValue("--surface-soft").trim() || "#f8fafb"
+    };
+
+    const padding = { top: 18, right: 18, bottom: 38, left: 58 };
+    const plotX = padding.left;
+    const plotY = padding.top;
+    const plotW = cssWidth - padding.left - padding.right;
+    const plotH = cssHeight - padding.top - padding.bottom;
+
+    if (plotW <= 10 || plotH <= 10) return;
+
+    const balances = projection.map(row => row.balance);
+    let minValue = Math.min(...balances);
+    let maxValue = Math.max(...balances);
+
+    if (minValue === maxValue) {
+      const pad = Math.max(Math.abs(maxValue) * 0.1, 1);
+      minValue -= pad;
+      maxValue += pad;
+    }
+
+    // Keep zero visible when relevant.
+    if (minValue > 0) minValue = 0;
+    if (maxValue < 0) maxValue = 0;
+
+    const range = maxValue - minValue || 1;
+    const valueToY = value => plotY + ((maxValue - value) / range) * plotH;
+    const pointCount = projection.length;
+    const xStep = pointCount > 1 ? plotW / (pointCount - 1) : 0;
+
+    const points = projection.map((row, index) => ({
+      x: plotX + (index * xStep),
+      y: valueToY(row.balance),
+      value: row.balance,
+      date: row.date
+    }));
+
+    // Background subtle fill.
+    ctx.fillStyle = colors.surfaceSoft;
+    ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+    // Grid lines + Y labels.
+    ctx.save();
+    ctx.font = '11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = colors.muted;
+    ctx.strokeStyle = colors.line;
+    ctx.lineWidth = 1;
+
+    const gridCount = 4;
+    for (let i = 0; i <= gridCount; i++) {
+      const t = i / gridCount;
+      const value = maxValue - t * range;
+      const y = plotY + t * plotH;
+      ctx.beginPath();
+      ctx.moveTo(plotX, y);
+      ctx.lineTo(plotX + plotW, y);
+      ctx.stroke();
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(compactMoney(value), plotX - 10, y);
+    }
+    ctx.restore();
+
+    // Zero line.
+    if (minValue <= 0 && maxValue >= 0) {
+      const zeroY = valueToY(0);
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = colors.danger;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(plotX, zeroY);
+      ctx.lineTo(plotX + plotW, zeroY);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Area fill.
+    ctx.save();
+    const gradient = ctx.createLinearGradient(0, plotY, 0, plotY + plotH);
+    gradient.addColorStop(0, 'rgba(29, 91, 79, 0.22)');
+    gradient.addColorStop(1, 'rgba(29, 91, 79, 0.02)');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, plotY + plotH);
+    points.forEach(point => ctx.lineTo(point.x, point.y));
+    ctx.lineTo(points[points.length - 1].x, plotY + plotH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Line segments: green above zero, red below zero.
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2.75;
+    for (let i = 1; i < points.length; i++) {
+      const p0 = points[i - 1];
+      const p1 = points[i];
+      ctx.strokeStyle = (p0.value < 0 || p1.value < 0) ? colors.danger : colors.primary;
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Emphasis dots at a readable cadence.
+    const dotStep = Math.max(1, Math.ceil(points.length / 10));
+    ctx.save();
+    for (let i = 0; i < points.length; i += dotStep) {
+      const point = points[i];
+      ctx.fillStyle = point.value < 0 ? colors.danger : colors.primaryDark;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const last = points[points.length - 1];
+    ctx.fillStyle = last.value < 0 ? colors.danger : colors.primaryDark;
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // X labels.
+    ctx.save();
+    ctx.font = '11px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = colors.muted;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const labelStep = Math.max(1, Math.ceil(points.length / 6));
+    for (let i = 0; i < points.length; i += labelStep) {
+      const point = points[i];
+      const label = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(point.date);
+      ctx.fillText(label, point.x, plotY + plotH + 10);
+    }
+    const lastPoint = points[points.length - 1];
+    const lastLabel = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(lastPoint.date);
+    ctx.fillText(lastLabel, lastPoint.x, plotY + plotH + 10);
+    ctx.restore();
+  }
+
+  function renderRisk(summary) {
+
+    let level = "safe";
+    let label = "Faible";
+    let icon = "✓";
+    let title = "Trésorerie maîtrisée";
+    let text = "Aucun découvert n’est détecté sur la période simulée.";
+
+    if (summary.firstNegativeDate) {
+      level = "danger";
+      label = "Élevé";
+      icon = "!";
+      title = "Découvert prévisionnel";
+      text = `Le solde devient négatif le ${formatDate(summary.firstNegativeDate)}.`;
+    } else if (summary.minimumBalance < state.settings.alertThreshold) {
+      level = "warning";
+      label = "Modéré";
+      icon = "!";
+      title = "Seuil d’alerte franchi";
+      text = `Le solde passe sous ${formatMoney(state.settings.alertThreshold)}.`;
+    }
+
+    els.riskLevelBadge.className = `risk-badge ${level}`;
+    els.riskLevelBadge.textContent = label;
+    els.riskSummary.innerHTML = `
+      <div class="risk-visual ${level}">${icon}</div>
+      <div>
+        <strong>${escapeHtml(title)}</strong>
+        <p>${escapeHtml(text)}</p>
+      </div>
+    `;
+
+    els.riskDetails.innerHTML = `
+      <div class="risk-detail">
+        <strong>${formatMoney(summary.minimumBalance)}</strong>
+        <span>Solde minimum prévu le ${formatDate(summary.minimumBalanceDate)}</span>
+      </div>
+      <div class="risk-detail">
+        <strong>${summary.firstBelowThresholdDate ? formatDate(summary.firstBelowThresholdDate) : "Non franchi"}</strong>
+        <span>Premier passage sous le seuil d’alerte</span>
+      </div>
+      <div class="risk-detail">
+        <strong>${formatMoney(summary.totalIncome - summary.totalExpense)}</strong>
+        <span>Variation nette sur la période</span>
+      </div>
+    `;
+  }
+
+  function renderUpcomingEvents() {
+    const now = startOfDay(new Date());
+    const horizon = addDays(now, Math.max(90, state.settings.forecastDays));
+    const occurrences = expandOccurrences(now, horizon).slice(0, 7);
+
+    if (!occurrences.length) {
+      els.upcomingEvents.innerHTML = `
+        <div class="empty-state compact show">
+          <div class="empty-icon">↕</div>
+          <h4>Aucun mouvement à venir</h4>
+          <p>Les prochains événements apparaîtront ici.</p>
+        </div>`;
+      return;
+    }
+
+    els.upcomingEvents.innerHTML = occurrences.map(event => `
+      <div class="event-row">
+        <div class="event-type-dot ${event.type}">${event.type === "income" ? "↗" : event.type === "transfer" ? "⇄" : "↘"}</div>
+        <div>
+          <h4>${escapeHtml(event.name)}</h4>
+          <p>${formatDate(event.date)} · ${escapeHtml(event.category)}${event.type === "transfer" ? " · Transfert (hors cashflow)" : ""}</p>
+        </div>
+        <strong class="${event.type === "income" ? "amount-income" : event.type === "transfer" ? "" : "amount-expense"}">
+          ${event.type === "income" ? "+" : event.type === "transfer" ? "" : "−"}${formatMoney(event.amount)}
+        </strong>
+      </div>
+    `).join("");
+  }
+
+  function renderCategoryBreakdown() {
+    const start = startOfDay(new Date());
+    const end = addDays(start, state.settings.forecastDays - 1);
+    const occurrences = expandOccurrences(start, end).filter(event => event.type !== "transfer");
+    const totals = new Map();
+
+    occurrences.forEach(event => {
+      const key = `${event.type}|${event.category}`;
+      totals.set(key, (totals.get(key) || 0) + event.amount);
+    });
+
+    const items = Array.from(totals.entries())
+      .map(([key, amount]) => {
+        const [type, category] = key.split("|");
+        return { type, category, amount };
+      })
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 6);
+
+    if (!items.length) {
+      els.categoryBreakdown.innerHTML = `
+        <div class="empty-state compact show">
+          <div class="empty-icon">◎</div>
+          <h4>Aucune répartition</h4>
+          <p>Les catégories principales seront calculées automatiquement.</p>
+        </div>`;
+      return;
+    }
+
+    const max = Math.max(...items.map(item => item.amount));
+    els.categoryBreakdown.innerHTML = items.map(item => `
+      <div class="category-item">
+        <p>${escapeHtml(item.category)} · ${item.type === "income" ? "Encaissement" : "Décaissement"}</p>
+        <strong>${formatMoney(item.amount)}</strong>
+        <div class="progress"><span style="width:${Math.max(4, (item.amount / max) * 100)}%"></span></div>
+      </div>
+    `).join("");
+  }
+
+  // ---------- Comptes ----------
+
+  function accountEventsFor(accountId) {
+    return state.events.filter(e => e.accountId === accountId || (e.type === "transfer" && e.toAccountId === accountId));
+  }
+
+  function computeAccountBalance(account) {
+    let balance = account.initialBalance;
+    state.events.forEach(event => {
+      if (event.type === "income" && event.accountId === account.id) {
+        balance += event.amount;
+      } else if (event.type === "expense" && event.accountId === account.id) {
+        balance -= event.amount;
+      } else if (event.type === "transfer") {
+        if (event.accountId === account.id) balance -= (event.amount + (event.transferFee || 0));
+        if (event.toAccountId === account.id) balance += event.amount;
+      }
+    });
+    return balance;
+  }
+
+  function computeTotalAvoirs() {
+    return state.accounts.filter(a => a.active).reduce((sum, a) => sum + computeAccountBalance(a), 0);
+  }
+
+  function computeTotalLiabilities() {
+    return state.liabilities.reduce((sum, l) => sum + l.amount, 0);
+  }
+
+  function populateAccountSelects() {
+    const activeAccounts = state.accounts.filter(a => a.active);
+    const optionsHtml = activeAccounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)} (${accountTypeLabels[a.type]})</option>`).join("");
+    els.eventAccountInput.innerHTML = `<option value="">Aucun compte</option>${optionsHtml}`;
+    els.eventToAccountInput.innerHTML = `<option value="">Sélectionner…</option>${optionsHtml}`;
+  }
+
+  function syncEventFormFieldsForType(type) {
+    const isTransfer = type === "transfer";
+    els.eventToAccountField.hidden = !isTransfer;
+    els.eventFeeField.hidden = !isTransfer;
+    els.eventToAccountInput.required = isTransfer;
+    els.eventAccountLabel.textContent = isTransfer ? "Compte débité (source)" : "Compte";
+    els.eventCategoryField.hidden = isTransfer;
+  }
+
+  function renderAccounts() {
+    const totalAssets = computeTotalAvoirs();
+    const totalLiabilities = computeTotalLiabilities();
+    const netWorth = totalAssets - totalLiabilities;
+
+    els.totalAssetsMetric.textContent = formatMoney(totalAssets);
+    els.totalLiabilitiesMetric.textContent = formatMoney(totalLiabilities);
+    els.netWorthMetric.textContent = formatMoney(netWorth);
+    if (els.dashboardTotalAssetsMetric) els.dashboardTotalAssetsMetric.textContent = formatMoney(totalAssets);
+
+    els.accountsEmptyState.classList.toggle("show", state.accounts.length === 0);
+    els.accountsGrid.innerHTML = state.accounts.map(account => {
+      const balance = computeAccountBalance(account);
+      return `
+        <div class="account-card ${account.active ? "" : "inactive"}">
+          <div class="account-card-top">
+            <div class="account-card-icon">${accountTypeIcons[account.type] || "◈"}</div>
+            <div>
+              <strong>${escapeHtml(account.name)}</strong>
+              <span>${accountTypeLabels[account.type]}${account.active ? "" : " · Inactif"}</span>
+            </div>
+          </div>
+          <div class="account-card-balance ${balance < 0 ? "amount-expense" : ""}">${formatMoney(balance)}</div>
+          ${account.description ? `<p style="margin:0;color:var(--muted);font-size:12px;">${escapeHtml(account.description)}</p>` : ""}
+          <div class="account-card-actions">
+            <button class="mini-button" data-account-edit="${account.id}" title="Modifier">✎</button>
+            <button class="mini-button" data-account-toggle="${account.id}" title="${account.active ? "Désactiver" : "Réactiver"}">${account.active ? "⏸" : "▶"}</button>
+            <button class="mini-button danger" data-account-delete="${account.id}" title="Supprimer">×</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    els.accountsGrid.querySelectorAll("[data-account-edit]").forEach(btn => {
+      btn.addEventListener("click", () => openAccountModal(state.accounts.find(a => a.id === btn.dataset.accountEdit)));
+    });
+    els.accountsGrid.querySelectorAll("[data-account-toggle]").forEach(btn => {
+      btn.addEventListener("click", () => toggleAccountActive(btn.dataset.accountToggle));
+    });
+    els.accountsGrid.querySelectorAll("[data-account-delete]").forEach(btn => {
+      btn.addEventListener("click", () => deleteAccount(btn.dataset.accountDelete));
+    });
+
+    if (!els.liabilitiesList) return;
+    if (!state.liabilities.length) {
+      els.liabilitiesList.innerHTML = `
+        <div class="empty-state compact show">
+          <div class="empty-icon">◇</div>
+          <h4>Aucun passif enregistré</h4>
+          <p>Ajoutez une dette, un crédit ou un emprunt pour calculer votre valeur nette.</p>
+        </div>`;
+    } else {
+      els.liabilitiesList.innerHTML = state.liabilities.map(l => `
+        <div class="event-row">
+          <div class="event-type-dot expense">◇</div>
+          <div>
+            <h4>${escapeHtml(l.name)}</h4>
+            <p>${l.dueDate ? `Échéance : ${formatDate(parseISODate(l.dueDate))}` : "Sans échéance"}${l.notes ? ` · ${escapeHtml(l.notes)}` : ""}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <strong class="amount-expense">${formatMoney(l.amount)}</strong>
+            <div class="row-actions">
+              <button class="mini-button" data-liability-edit="${l.id}" title="Modifier">✎</button>
+              <button class="mini-button danger" data-liability-delete="${l.id}" title="Supprimer">×</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+      els.liabilitiesList.querySelectorAll("[data-liability-edit]").forEach(btn => {
+        btn.addEventListener("click", () => openLiabilityModal(state.liabilities.find(l => l.id === btn.dataset.liabilityEdit)));
+      });
+      els.liabilitiesList.querySelectorAll("[data-liability-delete]").forEach(btn => {
+        btn.addEventListener("click", () => deleteLiability(btn.dataset.liabilityDelete));
+      });
+    }
+  }
+
+  function openAccountModal(account = null) {
+    els.accountForm.reset();
+    els.accountIdInput.value = "";
+    els.accountCurrencyInput.value = state.settings.currency;
+    if (account) {
+      els.accountModalTitle.textContent = "Modifier le compte";
+      els.accountIdInput.value = account.id;
+      els.accountNameInput.value = account.name;
+      els.accountTypeInput.value = account.type;
+      els.accountInitialBalanceInput.value = account.initialBalance;
+      els.accountCurrencyInput.value = account.currency;
+      els.accountDescriptionInput.value = account.description;
+      els.accountActiveInput.value = String(account.active);
+    } else {
+      els.accountModalTitle.textContent = "Nouveau compte";
+      els.accountInitialBalanceInput.value = 0;
+      els.accountActiveInput.value = "true";
+    }
+    els.accountModal.classList.add("open");
+    els.accountModal.setAttribute("aria-hidden", "false");
+    setTimeout(() => els.accountNameInput.focus(), 50);
+  }
+
+  function closeAccountModal() {
+    els.accountModal.classList.remove("open");
+    els.accountModal.setAttribute("aria-hidden", "true");
+  }
+
+  function saveAccount(e) {
+    e.preventDefault();
+    const name = els.accountNameInput.value.trim();
+    if (!name) {
+      showToast("Le nom du compte est requis.", true);
+      return;
+    }
+    const payload = sanitizeAccount({
+      id: els.accountIdInput.value || generateId(),
+      name,
+      type: els.accountTypeInput.value,
+      initialBalance: Number(els.accountInitialBalanceInput.value) || 0,
+      currency: els.accountCurrencyInput.value,
+      description: els.accountDescriptionInput.value.trim(),
+      active: els.accountActiveInput.value === "true",
+      createdAt: new Date().toISOString()
+    });
+
+    const existingIndex = state.accounts.findIndex(a => a.id === payload.id);
+    if (existingIndex >= 0) {
+      payload.createdAt = state.accounts[existingIndex].createdAt;
+      state.accounts[existingIndex] = payload;
+    } else {
+      state.accounts.push(payload);
+    }
+
+    persist();
+    closeAccountModal();
+    renderAll();
+    showToast(existingIndex >= 0 ? "Compte mis à jour." : "Compte créé.");
+  }
+
+  function toggleAccountActive(id) {
+    const account = state.accounts.find(a => a.id === id);
+    if (!account) return;
+    account.active = !account.active;
+    persist();
+    renderAll();
+    showToast(account.active ? "Compte réactivé." : "Compte désactivé.");
+  }
+
+  function deleteAccount(id) {
+    const account = state.accounts.find(a => a.id === id);
+    if (!account) return;
+    const linked = accountEventsFor(id).length;
+    const message = linked > 0
+      ? `« ${account.name} » est lié à ${linked} transaction(s). Le supprimer conservera ces transactions sans compte associé. Continuer ?`
+      : `Supprimer « ${account.name} » ?`;
+    if (!window.confirm(message)) return;
+
+    state.accounts = state.accounts.filter(a => a.id !== id);
+    state.events.forEach(event => {
+      if (event.accountId === id) event.accountId = "";
+      if (event.toAccountId === id) event.toAccountId = "";
+    });
+    persist();
+    renderAll();
+    showToast("Compte supprimé.");
+  }
+
+  function openLiabilityModal(liability = null) {
+    els.liabilityForm.reset();
+    els.liabilityIdInput.value = "";
+    if (liability) {
+      els.liabilityModalTitle.textContent = "Modifier le passif";
+      els.liabilityIdInput.value = liability.id;
+      els.liabilityNameInput.value = liability.name;
+      els.liabilityAmountInput.value = liability.amount;
+      els.liabilityDueDateInput.value = liability.dueDate || "";
+      els.liabilityNotesInput.value = liability.notes || "";
+    } else {
+      els.liabilityModalTitle.textContent = "Nouveau passif";
+    }
+    els.liabilityModal.classList.add("open");
+    els.liabilityModal.setAttribute("aria-hidden", "false");
+    setTimeout(() => els.liabilityNameInput.focus(), 50);
+  }
+
+  function closeLiabilityModal() {
+    els.liabilityModal.classList.remove("open");
+    els.liabilityModal.setAttribute("aria-hidden", "true");
+  }
+
+  function saveLiability(e) {
+    e.preventDefault();
+    const name = els.liabilityNameInput.value.trim();
+    const amount = Number(els.liabilityAmountInput.value);
+    if (!name || !Number.isFinite(amount) || amount < 0) {
+      showToast("Vérifiez le nom et le montant du passif.", true);
+      return;
+    }
+    const payload = sanitizeLiability({
+      id: els.liabilityIdInput.value || generateId(),
+      name,
+      amount,
+      dueDate: els.liabilityDueDateInput.value,
+      notes: els.liabilityNotesInput.value.trim(),
+      createdAt: new Date().toISOString()
+    });
+
+    const existingIndex = state.liabilities.findIndex(l => l.id === payload.id);
+    if (existingIndex >= 0) {
+      payload.createdAt = state.liabilities[existingIndex].createdAt;
+      state.liabilities[existingIndex] = payload;
+    } else {
+      state.liabilities.push(payload);
+    }
+
+    persist();
+    closeLiabilityModal();
+    renderAll();
+    showToast(existingIndex >= 0 ? "Passif mis à jour." : "Passif ajouté.");
+  }
+
+  function deleteLiability(id) {
+    const liability = state.liabilities.find(l => l.id === id);
+    if (!liability) return;
+    if (!window.confirm(`Supprimer « ${liability.name} » ?`)) return;
+    state.liabilities = state.liabilities.filter(l => l.id !== id);
+    persist();
+    renderAll();
+    showToast("Passif supprimé.");
+  }
+
+  // ---------- Budget mensuel (M-1 / M / M+1) ----------
+
+  function computeMonthMetrics(monthDate, clipToToday) {
+    const monthStart = startOfMonth(monthDate);
+    const monthEnd = endOfMonth(monthDate);
+    const today = startOfDay(new Date());
+    const effectiveEnd = clipToToday && today < monthEnd ? today : monthEnd;
+
+    if (effectiveEnd < monthStart) {
+      return { income: 0, expense: 0, savings: 0, remainder: 0 };
+    }
+
+    const occurrences = expandOccurrences(monthStart, effectiveEnd);
+    let income = 0;
+    let expense = 0;
+    let savings = 0;
+
+    occurrences.forEach(event => {
+      if (event.type === "income") income += event.amount;
+      else if (event.type === "expense") expense += event.amount;
+      else if (event.type === "transfer") {
+        const fromAccount = state.accounts.find(a => a.id === event.accountId);
+        const toAccount = state.accounts.find(a => a.id === event.toAccountId);
+        if (toAccount?.type === "savings") savings += event.amount;
+        if (fromAccount?.type === "savings") savings -= event.amount;
+      }
+    });
+
+    const remainder = income - expense - savings;
+    return { income, expense, savings, remainder };
+  }
+
+  function renderBudgetView() {
+    const monthDate = addMonths(startOfMonth(new Date()), budgetMonthOffset);
+    const today = startOfDay(new Date());
+    const isPastMonth = endOfMonth(monthDate) < today;
+    const isFutureMonth = startOfMonth(monthDate) > today;
+    const isCurrentMonth = !isPastMonth && !isFutureMonth;
+
+    els.budgetMonthLabel.textContent = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(monthDate);
+
+    if (isPastMonth) {
+      els.budgetStatusBadge.textContent = "Réel";
+      els.budgetStatusBadge.className = "risk-badge safe";
+      els.budgetRealizedHint.textContent = "Données réelles du mois écoulé.";
+    } else if (isFutureMonth) {
+      els.budgetStatusBadge.textContent = "Prévision";
+      els.budgetStatusBadge.className = "risk-badge warning";
+      els.budgetRealizedHint.textContent = "Ce mois n’a pas commencé : tous les montants sont prévisionnels.";
+    } else {
+      els.budgetStatusBadge.textContent = "Réel + prévision";
+      els.budgetStatusBadge.className = "risk-badge warning";
+      const realized = computeMonthMetrics(monthDate, true);
+      els.budgetRealizedHint.textContent = `Mois en cours : le total ci-dessous inclut les prévisions restantes. Réel à ce jour — Revenus ${formatMoney(realized.income)}, Dépenses ${formatMoney(realized.expense)}.`;
+    }
+
+    const metrics = computeMonthMetrics(monthDate, false);
+    els.budgetIncomeMetric.textContent = formatMoney(metrics.income);
+    els.budgetExpenseMetric.textContent = formatMoney(metrics.expense);
+    els.budgetSavingsMetric.textContent = formatMoney(metrics.savings);
+    els.budgetRemainderMetric.textContent = formatMoney(metrics.remainder);
+
+    renderWhereMoneyGoes(metrics);
+
+    const previousMonth = addMonths(monthDate, -1);
+    const previousMetrics = computeMonthMetrics(previousMonth, false);
+    renderBudgetComparison(previousMonth, previousMetrics, monthDate, metrics);
+  }
+
+  function renderWhereMoneyGoes(metrics) {
+    const income = Math.max(metrics.income, 0);
+    if (income <= 0) {
+      els.whereMoneyGoesBar.innerHTML = `<span style="width:100%;background:var(--surface-soft)"></span>`;
+      els.whereMoneyGoesLegend.innerHTML = `<p style="color:var(--muted);font-size:13px;margin:0;">Ajoutez des revenus ce mois-ci pour voir la répartition.</p>`;
+      return;
+    }
+
+    const expensePct = Math.min(100, Math.max(0, (metrics.expense / income) * 100));
+    const savingsPct = Math.min(100 - expensePct, Math.max(0, (metrics.savings / income) * 100));
+    const remainderPct = Math.max(0, 100 - expensePct - savingsPct);
+
+    els.whereMoneyGoesBar.innerHTML = `
+      <span style="width:${expensePct}%;background:var(--danger)"></span>
+      <span style="width:${savingsPct}%;background:var(--warning)"></span>
+      <span style="width:${remainderPct}%;background:var(--success)"></span>
+    `;
+
+    els.whereMoneyGoesLegend.innerHTML = `
+      <div class="where-money-legend-item"><span><i style="background:var(--danger)"></i>Dépenses</span><strong>${Math.round(expensePct)} Ar sur 100 · ${formatMoney(metrics.expense)}</strong></div>
+      <div class="where-money-legend-item"><span><i style="background:var(--warning)"></i>Épargne</span><strong>${Math.round(savingsPct)} Ar sur 100 · ${formatMoney(metrics.savings)}</strong></div>
+      <div class="where-money-legend-item"><span><i style="background:var(--success)"></i>Reste</span><strong>${Math.round(remainderPct)} Ar sur 100 · ${formatMoney(metrics.remainder)}</strong></div>
+    `;
+  }
+
+  function renderBudgetComparison(previousMonth, previousMetrics, currentMonth, currentMetrics) {
+    const rows = [
+      ["Revenus", previousMetrics.income, currentMetrics.income],
+      ["Dépenses", previousMetrics.expense, currentMetrics.expense],
+      ["Épargne", previousMetrics.savings, currentMetrics.savings],
+      ["Reste", previousMetrics.remainder, currentMetrics.remainder]
+    ];
+
+    els.budgetComparisonBody.innerHTML = rows.map(([label, prev, curr]) => {
+      const variation = prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : (curr === 0 ? 0 : 100);
+      const isGoodDirection = label === "Dépenses" ? variation <= 0 : variation >= 0;
+      const variationLabel = `${variation >= 0 ? "+" : ""}${Math.round(variation)} %`;
+      return `
+        <tr>
+          <td>${label}</td>
+          <td class="align-right">${formatMoney(prev)}</td>
+          <td class="align-right">${formatMoney(curr)}</td>
+          <td class="align-right ${isGoodDirection ? "amount-income" : "amount-expense"}">${variationLabel}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function renderEventsTable() {
+    const query = els.searchInput.value.trim().toLowerCase();
+    const type = els.typeFilter.value;
+    const status = els.statusFilter.value;
+
+    const filtered = [...state.events]
+      .filter(event => !query || `${event.name} ${event.category}`.toLowerCase().includes(query))
+      .filter(event => type === "all" || event.type === type)
+      .filter(event => status === "all" || event.status === status)
+      .sort((a, b) => parseISODate(a.date) - parseISODate(b.date));
+
+    els.eventCountBadge.textContent = `${filtered.length} événement${filtered.length > 1 ? "s" : ""}`;
+    els.tableEmptyState.classList.toggle("show", filtered.length === 0);
+    const typeLabel = t => t === "income" ? "Encaissement" : t === "transfer" ? "Transfert" : "Décaissement";
+    els.eventsTableBody.innerHTML = filtered.map(event => {
+      const account = state.accounts.find(a => a.id === event.accountId);
+      const toAccount = state.accounts.find(a => a.id === event.toAccountId);
+      const accountLabel = event.type === "transfer"
+        ? `${account ? escapeHtml(account.name) : "?"} → ${toAccount ? escapeHtml(toAccount.name) : "?"}`
+        : (account ? escapeHtml(account.name) : "");
+      return `
+      <tr>
+        <td>
+          <div class="table-title">
+            <strong>${escapeHtml(event.name)}</strong>
+            <span>${escapeHtml(event.category)}${accountLabel ? ` · ${accountLabel}` : ""}${event.notes ? ` · ${escapeHtml(event.notes)}` : ""}</span>
+          </div>
+        </td>
+        <td><span class="pill ${event.type}">${typeLabel(event.type)}</span></td>
+        <td>${formatDate(parseISODate(event.date))}</td>
+        <td>${recurrenceLabels[event.recurrence]}</td>
+        <td><span class="pill">${statusLabels[event.status]}</span></td>
+        <td class="align-right ${event.type === "income" ? "amount-income" : event.type === "transfer" ? "" : "amount-expense"}">
+          ${event.type === "income" ? "+" : event.type === "transfer" ? "" : "−"}${formatMoney(event.amount)}
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="mini-button" data-action="edit" data-id="${event.id}" title="Modifier">✎</button>
+            <button class="mini-button danger" data-action="delete" data-id="${event.id}" title="Supprimer">×</button>
+          </div>
+        </td>
+      </tr>
+    `;
+    }).join("");
+
+    els.eventsTableBody.querySelectorAll("[data-action]").forEach(button => {
+      button.addEventListener("click", () => {
+        const event = state.events.find(item => item.id === button.dataset.id);
+        if (!event) return;
+        if (button.dataset.action === "edit") openEventModal(event);
+        else deleteEvent(event.id);
+      });
+    });
+  }
+
+  function renderCalendar() {
+    const monthStart = startOfMonth(currentCalendarDate);
+    const gridStart = startOfWeekMonday(monthStart);
+    const monthEnd = endOfMonth(monthStart);
+    const gridEnd = endOfWeekSunday(monthEnd);
+    const occurrences = expandOccurrences(gridStart, gridEnd);
+    const byDate = new Map();
+
+    occurrences.forEach(event => {
+      const key = toISODate(event.date);
+      if (!byDate.has(key)) byDate.set(key, []);
+      byDate.get(key).push(event);
+    });
+
+    els.calendarMonthLabel.textContent = new Intl.DateTimeFormat("fr-FR", {
+      month: "long",
+      year: "numeric"
+    }).format(monthStart);
+
+    const days = [];
+    let cursor = new Date(gridStart);
+
+    while (cursor <= gridEnd) {
+      const key = toISODate(cursor);
+      const dayEvents = byDate.get(key) || [];
+      const isCurrentMonth = cursor.getMonth() === monthStart.getMonth();
+      const isToday = key === toISODate(new Date());
+
+      days.push(`
+        <div class="calendar-day ${isCurrentMonth ? "" : "muted"} ${isToday ? "today" : ""}">
+          <div class="calendar-day-number">${cursor.getDate()}</div>
+          ${dayEvents.slice(0, 4).map(event => `
+            <div class="calendar-event ${event.type}" title="${escapeHtml(event.name)} · ${formatMoney(event.amount)}">
+              ${escapeHtml(event.name)}
+            </div>
+          `).join("")}
+          ${dayEvents.length > 4 ? `<div class="calendar-event">+${dayEvents.length - 4} autres</div>` : ""}
+        </div>
+      `);
+
+      cursor = addDays(cursor, 1);
+    }
+
+    els.calendarGrid.innerHTML = days.join("");
+  }
+
+
+  function renderFeasibilityForm() {
+    const f = state.feasibility;
+    els.projectNameInput.value = f.projectName;
+    els.projectProfileInput.value = f.profile;
+    els.desiredStartDateInput.value = f.desiredStartDate;
+    els.workingCapitalInput.value = f.workingCapital;
+    els.contingencyRateInput.value = f.contingencyRate;
+    els.monthlyIncomeInput.value = f.monthlyIncome;
+    els.monthlyExpensesInput.value = f.monthlyExpenses;
+    els.manualMonthlySavingsInput.value = f.manualMonthlySavings;
+    els.currentSavingsInput.value = f.currentSavings;
+    els.projectMonthlyRevenueInput.value = f.projectMonthlyRevenue;
+    els.projectMonthlyOperatingCostsInput.value = f.projectMonthlyOperatingCosts;
+    renderCostRows();
+    renderFundingRows();
+    renderFeasibilityAccountsSummary();
+  }
+
+  function renderFeasibilityAccountsSummary() {
+    const activeAccounts = state.accounts.filter(a => a.active);
+    if (!activeAccounts.length) {
+      els.feasibilityAccountsSummary.innerHTML = `<p style="color:var(--muted);font-size:13px;margin:0;">Aucun compte actif. Ajoutez vos comptes depuis la section « Comptes » pour voir vos liquidités ici.</p>`;
+      return;
+    }
+    const total = computeTotalAvoirs();
+    els.feasibilityAccountsSummary.innerHTML = activeAccounts.map(a => `
+      <div class="category-item">
+        <p>${escapeHtml(a.name)} · ${accountTypeLabels[a.type]}</p>
+        <strong>${formatMoney(computeAccountBalance(a))}</strong>
+        <div class="progress"><span style="width:${Math.max(4, Math.min(100, (computeAccountBalance(a) / (total || 1)) * 100))}%"></span></div>
+      </div>
+    `).join("") + `
+      <div class="category-item" style="border-top:1px solid var(--line);padding-top:10px;margin-top:4px;">
+        <p><strong>Total disponible</strong></p>
+        <strong>${formatMoney(total)}</strong>
+      </div>
+    `;
+  }
+
+  function renderCostRows() {
+    els.projectCostsList.innerHTML = state.feasibility.costs.map(row => `
+      <div class="dynamic-row cost-row" data-cost-id="${row.id}">
+        <label class="dynamic-label">
+          <span>Libellé</span>
+          <input type="text" data-field="name" maxlength="90" value="${escapeHtml(row.name)}" placeholder="Ex. Matériel" />
+        </label>
+        <label class="dynamic-label">
+          <span>Catégorie</span>
+          <select data-field="category">
+            ${["Investissement", "Frais de lancement", "Stock initial", "Étude et conseil", "Communication", "Autorisation et formalités", "Autre"].map(option =>
+              `<option value="${option}" ${row.category === option ? "selected" : ""}>${option}</option>`
+            ).join("")}
+          </select>
+        </label>
+        <label class="dynamic-label">
+          <span>Échéance</span>
+          <select data-field="timing">
+            ${["Avant lancement", "Démarrage", "1er mois", "1er trimestre", "Plus tard"].map(option =>
+              `<option value="${option}" ${row.timing === option ? "selected" : ""}>${option}</option>`
+            ).join("")}
+          </select>
+        </label>
+        <label class="dynamic-label">
+          <span>Montant</span>
+          <input type="number" data-field="amount" min="0" step="1000" value="${row.amount}" />
+        </label>
+        <button type="button" class="remove-row-btn" data-remove-cost="${row.id}" title="Supprimer">×</button>
+      </div>
+    `).join("");
+
+    els.projectCostsList.querySelectorAll("[data-remove-cost]").forEach(button => {
+      button.addEventListener("click", () => {
+        if (state.feasibility.costs.length === 1) {
+          showToast("Conservez au moins une ligne de coût.", true);
+          return;
+        }
+        state.feasibility.costs = state.feasibility.costs.filter(row => row.id !== button.dataset.removeCost);
+        persist();
+        renderFeasibilityForm();
+        renderFeasibility();
+      });
+    });
+  }
+
+  function renderFundingRows() {
+    els.projectFundingList.innerHTML = state.feasibility.funding.map(row => `
+      <div class="dynamic-row" data-funding-id="${row.id}">
+        <label class="dynamic-label">
+          <span>Source</span>
+          <input type="text" data-field="name" maxlength="90" value="${escapeHtml(row.name)}" placeholder="Ex. Prêt bancaire" />
+        </label>
+        <label class="dynamic-label">
+          <span>Nature</span>
+          <select data-field="type">
+            ${["Apport", "Emprunt", "Subvention", "Don ou aide", "Investisseur", "Crédit fournisseur", "Autre"].map(option =>
+              `<option value="${option}" ${row.type === option ? "selected" : ""}>${option}</option>`
+            ).join("")}
+          </select>
+        </label>
+        <label class="dynamic-label">
+          <span>Montant</span>
+          <input type="number" data-field="amount" min="0" step="1000" value="${row.amount}" />
+        </label>
+        <button type="button" class="remove-row-btn" data-remove-funding="${row.id}" title="Supprimer">×</button>
+      </div>
+    `).join("");
+
+    els.projectFundingList.querySelectorAll("[data-remove-funding]").forEach(button => {
+      button.addEventListener("click", () => {
+        if (state.feasibility.funding.length === 1) {
+          showToast("Conservez au moins une ligne de financement.", true);
+          return;
+        }
+        state.feasibility.funding = state.feasibility.funding.filter(row => row.id !== button.dataset.removeFunding);
+        persist();
+        renderFeasibilityForm();
+        renderFeasibility();
+      });
+    });
+  }
+
+  function addCostRow() {
+    saveFeasibilityInputs(false);
+    state.feasibility.costs.push({
+      id: generateId(),
+      name: "",
+      category: "Investissement",
+      timing: "Démarrage",
+      amount: 0
+    });
+    persist();
+    renderFeasibilityForm();
+  }
+
+  function addFundingRow() {
+    saveFeasibilityInputs(false);
+    state.feasibility.funding.push({
+      id: generateId(),
+      name: "",
+      type: "Apport",
+      amount: 0
+    });
+    persist();
+    renderFeasibilityForm();
+  }
+
+  function saveFeasibilityInputs(doPersist = true) {
+    const f = state.feasibility;
+    f.projectName = els.projectNameInput.value.trim();
+    f.profile = els.projectProfileInput.value;
+    f.desiredStartDate = els.desiredStartDateInput.value;
+    f.workingCapital = nonNegativeNumber(els.workingCapitalInput.value);
+    f.contingencyRate = Math.min(100, nonNegativeNumber(els.contingencyRateInput.value));
+    f.monthlyIncome = nonNegativeNumber(els.monthlyIncomeInput.value);
+    f.monthlyExpenses = nonNegativeNumber(els.monthlyExpensesInput.value);
+    f.manualMonthlySavings = nonNegativeNumber(els.manualMonthlySavingsInput.value);
+    f.currentSavings = nonNegativeNumber(els.currentSavingsInput.value);
+    f.projectMonthlyRevenue = nonNegativeNumber(els.projectMonthlyRevenueInput.value);
+    f.projectMonthlyOperatingCosts = nonNegativeNumber(els.projectMonthlyOperatingCostsInput.value);
+
+    els.projectCostsList.querySelectorAll("[data-cost-id]").forEach(element => {
+      const row = f.costs.find(item => item.id === element.dataset.costId);
+      if (!row) return;
+      row.name = element.querySelector('[data-field="name"]').value.trim();
+      row.category = element.querySelector('[data-field="category"]').value;
+      row.timing = element.querySelector('[data-field="timing"]').value;
+      row.amount = nonNegativeNumber(element.querySelector('[data-field="amount"]').value);
+    });
+
+    els.projectFundingList.querySelectorAll("[data-funding-id]").forEach(element => {
+      const row = f.funding.find(item => item.id === element.dataset.fundingId);
+      if (!row) return;
+      row.name = element.querySelector('[data-field="name"]').value.trim();
+      row.type = element.querySelector('[data-field="type"]').value;
+      row.amount = nonNegativeNumber(element.querySelector('[data-field="amount"]').value);
+    });
+
+    if (doPersist) persist();
+  }
+
+  function calculateFeasibility() {
+    const f = state.feasibility;
+    const directCosts = f.costs.reduce((sum, row) => sum + nonNegativeNumber(row.amount), 0);
+    const contingency = directCosts * (f.contingencyRate / 100);
+    const totalNeed = directCosts + contingency + f.workingCapital;
+    const listedFunding = f.funding.reduce((sum, row) => sum + nonNegativeNumber(row.amount), 0);
+    const immediateResources = listedFunding + f.currentSavings;
+    const fundingGap = Math.max(0, totalNeed - immediateResources);
+    const monthlyCapacityFromBudget = Math.max(0, f.monthlyIncome - f.monthlyExpenses);
+    const monthlySavings = Math.max(monthlyCapacityFromBudget, f.manualMonthlySavings);
+    const monthsToTarget = fundingGap <= 0 ? 0 : monthlySavings > 0 ? Math.ceil(fundingGap / monthlySavings) : null;
+    const targetDate = monthsToTarget === null ? null : addMonthsPreserveDay(startOfDay(new Date()), monthsToTarget);
+    const operatingSurplus = f.projectMonthlyRevenue - f.projectMonthlyOperatingCosts;
+    const paybackMonths = totalNeed > 0 && operatingSurplus > 0 ? Math.ceil(totalNeed / operatingSurplus) : null;
+    const coverageRate = totalNeed > 0 ? immediateResources / totalNeed : 0;
+    const debtFunding = f.funding
+      .filter(row => ["Emprunt", "Crédit fournisseur"].includes(row.type))
+      .reduce((sum, row) => sum + row.amount, 0);
+    const debtShare = immediateResources > 0 ? debtFunding / immediateResources : 0;
+
+    return {
+      directCosts,
+      contingency,
+      totalNeed,
+      listedFunding,
+      immediateResources,
+      fundingGap,
+      monthlyCapacityFromBudget,
+      monthlySavings,
+      monthsToTarget,
+      targetDate,
+      operatingSurplus,
+      paybackMonths,
+      coverageRate,
+      debtFunding,
+      debtShare
+    };
+  }
+
+  function renderFeasibility() {
+    const f = state.feasibility;
+    const r = calculateFeasibility();
+
+    els.totalProjectNeedResult.textContent = formatMoney(r.totalNeed);
+    els.immediateResourcesResult.textContent = formatMoney(r.immediateResources);
+    els.fundingGapResult.textContent = formatMoney(r.fundingGap);
+    els.monthlySavingsResult.textContent = formatMoney(r.monthlySavings);
+    els.monthsToTargetResult.textContent = r.monthsToTarget === null
+      ? "Non calculable"
+      : r.monthsToTarget === 0
+        ? "Budget disponible"
+        : `${r.monthsToTarget} mois`;
+    els.targetDateHint.textContent = r.targetDate
+      ? `Budget estimé vers ${formatDate(r.targetDate)}`
+      : "Aucune capacité d’épargne positive";
+    els.paybackResult.textContent = r.paybackMonths
+      ? `${r.paybackMonths} mois`
+      : r.operatingSurplus === 0
+        ? "Non renseigné"
+        : "Non récupérable";
+
+    let statusClass = "warning";
+    let statusTitle = "Analyse partielle";
+    let statusText = "Renseignez au moins un coût positif pour obtenir une conclusion exploitable.";
+
+    if (r.totalNeed > 0) {
+      if (r.fundingGap <= 0) {
+        statusClass = "good";
+        statusTitle = "Financement initial couvert";
+        statusText = `Les ressources immédiates couvrent le budget estimé avec une marge de ${formatMoney(r.immediateResources - r.totalNeed)}.`;
+      } else if (r.monthsToTarget !== null) {
+        const desiredDate = f.desiredStartDate ? parseISODate(f.desiredStartDate) : null;
+        const onTime = desiredDate && r.targetDate ? r.targetDate <= desiredDate : null;
+        statusClass = onTime === false ? "danger" : "warning";
+        statusTitle = onTime === false ? "Budget insuffisant à la date souhaitée" : "Projet finançable progressivement";
+        statusText = `Il reste ${formatMoney(r.fundingGap)} à réunir. Au rythme retenu, le budget serait atteint en environ ${r.monthsToTarget} mois.`;
+      } else {
+        statusClass = "danger";
+        statusTitle = "Plan de financement incomplet";
+        statusText = `Il manque ${formatMoney(r.fundingGap)} et aucune capacité d’épargne mensuelle positive n’est disponible.`;
+      }
+    }
+
+    els.feasibilityStatus.className = `feasibility-status ${statusClass}`;
+    els.feasibilityStatus.innerHTML = `<h3>${escapeHtml(statusTitle)}</h3><p>${escapeHtml(statusText)}</p>`;
+
+    const analysis = [];
+    if (r.totalNeed > 0) {
+      analysis.push({
+        title: "Structure des besoins",
+        text: `Les coûts directs représentent ${percentage(r.directCosts, r.totalNeed)} du budget. La réserve de sécurité vaut ${formatMoney(r.contingency)} et le besoin de trésorerie initial ${formatMoney(f.workingCapital)}.`
+      });
+
+      analysis.push({
+        title: "Couverture immédiate",
+        text: `Les ressources disponibles couvrent ${Math.round(r.coverageRate * 100)} % du besoin total.${r.debtFunding > 0 ? ` La part des financements assimilés à de la dette représente ${Math.round(r.debtShare * 100)} % des ressources immédiates.` : ""}`
+      });
+
+      if (r.monthlySavings > 0) {
+        analysis.push({
+          title: "Effort d’épargne",
+          text: `La capacité mensuelle retenue est de ${formatMoney(r.monthlySavings)}. Elle correspond au maximum entre l’épargne déclarée et le revenu disponible après dépenses.`
+        });
+      }
+
+      if (f.desiredStartDate && r.targetDate) {
+        const desired = parseISODate(f.desiredStartDate);
+        const deltaMonths = monthDifference(r.targetDate, desired);
+        analysis.push({
+          title: "Compatibilité avec la date souhaitée",
+          text: r.targetDate <= desired
+            ? `Le budget devrait être réuni avant la date souhaitée, avec environ ${Math.abs(deltaMonths)} mois de marge.`
+            : `Le budget serait réuni environ ${Math.abs(deltaMonths)} mois après la date souhaitée. Il faut réduire les coûts, augmenter l’apport ou reporter le lancement.`
+        });
+      }
+
+      if (f.projectMonthlyRevenue > 0 || f.projectMonthlyOperatingCosts > 0) {
+        analysis.push({
+          title: "Exploitation simplifiée",
+          text: r.operatingSurplus > 0
+            ? `Le surplus mensuel estimé est de ${formatMoney(r.operatingSurplus)}. Le délai de récupération simple est d’environ ${r.paybackMonths} mois.`
+            : `Les décaissements mensuels atteignent ou dépassent les encaissements. Le projet ne génère pas de surplus mensuel dans ces hypothèses.`
+        });
+      }
+    }
+
+    els.feasibilityAnalysis.innerHTML = analysis.length
+      ? analysis.map(item => `<div class="analysis-item"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.text)}</p></div>`).join("")
+      : `<div class="analysis-item"><strong>Données insuffisantes</strong><p>Ajoutez les coûts réels du projet et les ressources envisagées.</p></div>`;
+
+    const categoryTotals = new Map();
+    f.costs.forEach(row => categoryTotals.set(row.category, (categoryTotals.get(row.category) || 0) + row.amount));
+    const breakdown = Array.from(categoryTotals.entries()).filter(([, amount]) => amount > 0);
+
+    els.projectCostBreakdown.innerHTML = [
+      ...breakdown.map(([name, amount]) => `<tr><td>${escapeHtml(name)}</td><td class="align-right">${formatMoney(amount)}</td></tr>`),
+      `<tr><td>Marge de sécurité (${f.contingencyRate} %)</td><td class="align-right">${formatMoney(r.contingency)}</td></tr>`,
+      `<tr><td>Trésorerie initiale / BFR</td><td class="align-right">${formatMoney(f.workingCapital)}</td></tr>`,
+      `<tr><td><strong>Total</strong></td><td class="align-right"><strong>${formatMoney(r.totalNeed)}</strong></td></tr>`
+    ].join("");
+  }
+
+  function loadFeasibilityDemo() {
+    const target = addMonthsPreserveDay(startOfDay(new Date()), 12);
+    state.feasibility = {
+      projectName: "Ouverture d’un atelier de services numériques",
+      profile: "personal",
+      desiredStartDate: toISODate(target),
+      costs: [
+        { id: generateId(), name: "Ordinateurs et équipements", category: "Investissement", timing: "Avant lancement", amount: 4500000 },
+        { id: generateId(), name: "Mobilier et aménagement", category: "Investissement", timing: "Démarrage", amount: 1800000 },
+        { id: generateId(), name: "Formalités et autorisations", category: "Autorisation et formalités", timing: "Avant lancement", amount: 400000 },
+        { id: generateId(), name: "Communication de lancement", category: "Communication", timing: "1er mois", amount: 600000 },
+        { id: generateId(), name: "Stock de consommables", category: "Stock initial", timing: "Démarrage", amount: 700000 }
+      ],
+      funding: [
+        { id: generateId(), name: "Aide familiale confirmée", type: "Don ou aide", amount: 1200000 },
+        { id: generateId(), name: "Microcrédit envisagé", type: "Emprunt", amount: 2500000 }
+      ],
+      workingCapital: 1500000,
+      contingencyRate: 10,
+      monthlyIncome: 1300000,
+      monthlyExpenses: 850000,
+      manualMonthlySavings: 400000,
+      currentSavings: 1800000,
+      projectMonthlyRevenue: 2200000,
+      projectMonthlyOperatingCosts: 1450000
+    };
+    persist();
+    renderFeasibilityForm();
+    renderFeasibility();
+    showToast("Exemple de faisabilité chargé.");
+  }
+
+  function resetFeasibility() {
+    const confirmed = window.confirm("Réinitialiser entièrement l’étude de faisabilité ?");
+    if (!confirmed) return;
+    state.feasibility = structuredClone(defaultState.feasibility);
+    persist();
+    renderFeasibilityForm();
+    renderFeasibility();
+    showToast("Étude réinitialisée.");
+  }
+
+  function nonNegativeNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.max(0, number) : 0;
+  }
+
+  function percentage(part, total) {
+    return total > 0 ? `${Math.round((part / total) * 100)} %` : "0 %";
+  }
+
+  function monthDifference(later, earlier) {
+    return (later.getFullYear() - earlier.getFullYear()) * 12 + later.getMonth() - earlier.getMonth();
+  }
+
+  function openEventModal(event = null) {
+    els.eventForm.reset();
+    els.eventIdInput.value = "";
+    setDefaultEventDate();
+    populateAccountSelects();
+    document.querySelector('input[name="eventType"][value="income"]').checked = true;
+    populateCategoryOptions("income");
+    syncEventFormFieldsForType("income");
+
+    if (event) {
+      els.eventModalTitle.textContent = "Modifier l’événement";
+      els.eventIdInput.value = event.id;
+      document.querySelector(`input[name="eventType"][value="${event.type}"]`).checked = true;
+      populateCategoryOptions(event.type, event.category);
+      syncEventFormFieldsForType(event.type);
+      els.eventNameInput.value = event.name;
+      els.eventAmountInput.value = event.amount;
+      els.eventDateInput.value = event.date;
+      els.eventStatusInput.value = event.status;
+      els.eventRecurrenceInput.value = event.recurrence;
+      els.eventEndDateInput.value = event.endDate || "";
+      els.eventNotesInput.value = event.notes || "";
+      els.eventAccountInput.value = event.accountId || "";
+      els.eventToAccountInput.value = event.toAccountId || "";
+      els.eventFeeInput.value = event.transferFee || "";
+    } else {
+      els.eventModalTitle.textContent = "Nouvel événement";
+    }
+
+    els.eventModal.classList.add("open");
+    els.eventModal.setAttribute("aria-hidden", "false");
+    setTimeout(() => els.eventNameInput.focus(), 50);
+  }
+
+  function closeEventModal() {
+    els.eventModal.classList.remove("open");
+    els.eventModal.setAttribute("aria-hidden", "true");
+  }
+
+  function saveEvent(e) {
+    e.preventDefault();
+
+    const type = document.querySelector('input[name="eventType"]:checked').value;
+    const name = els.eventNameInput.value.trim();
+    const amount = Math.abs(Number(els.eventAmountInput.value));
+    const date = els.eventDateInput.value;
+    const endDate = els.eventEndDateInput.value;
+    const recurrence = els.eventRecurrenceInput.value;
+
+    if (!name || !Number.isFinite(amount) || amount <= 0 || !isValidDateString(date)) {
+      showToast("Vérifiez le libellé, le montant et la date.", true);
+      return;
+    }
+
+    if (endDate && parseISODate(endDate) < parseISODate(date)) {
+      showToast("La date de fin doit être postérieure à la date de départ.", true);
+      return;
+    }
+
+    if (type === "transfer") {
+      if (!els.eventAccountInput.value || !els.eventToAccountInput.value) {
+        showToast("Sélectionnez le compte source et le compte destination du transfert.", true);
+        return;
+      }
+      if (els.eventAccountInput.value === els.eventToAccountInput.value) {
+        showToast("Le compte source et le compte destination doivent être différents.", true);
+        return;
+      }
+    }
+
+    const payload = {
+      id: els.eventIdInput.value || generateId(),
+      name,
+      type,
+      amount,
+      date,
+      endDate: recurrence === "none" ? "" : endDate,
+      category: type === "transfer" ? "Transfert interne" : els.eventCategoryInput.value,
+      status: els.eventStatusInput.value,
+      recurrence,
+      notes: els.eventNotesInput.value.trim(),
+      accountId: els.eventAccountInput.value || "",
+      toAccountId: type === "transfer" ? els.eventToAccountInput.value : "",
+      transferFee: type === "transfer" ? (Number(els.eventFeeInput.value) || 0) : 0,
+      createdAt: new Date().toISOString()
+    };
+
+    const existingIndex = state.events.findIndex(event => event.id === payload.id);
+    if (existingIndex >= 0) {
+      payload.createdAt = state.events[existingIndex].createdAt;
+      state.events[existingIndex] = payload;
+    } else {
+      state.events.push(payload);
+    }
+
+    persist();
+    closeEventModal();
+    renderAll();
+    showToast(existingIndex >= 0 ? "Événement mis à jour." : "Événement ajouté.");
+  }
+
+  function deleteEvent(id) {
+    const event = state.events.find(item => item.id === id);
+    if (!event) return;
+
+    const confirmed = window.confirm(`Supprimer « ${event.name} » ?`);
+    if (!confirmed) return;
+
+    state.events = state.events.filter(item => item.id !== id);
+    persist();
+    renderAll();
+    showToast("Événement supprimé.");
+  }
+
+  function populateCategoryOptions(type, selected = "") {
+    els.eventCategoryInput.innerHTML = categories[type]
+      .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      .join("");
+
+    if (selected && categories[type].includes(selected)) {
+      els.eventCategoryInput.value = selected;
+    }
+  }
+
+  function saveSettings(e) {
+    e.preventDefault();
+
+    const openingBalance = Number(els.openingBalanceInput.value);
+    const alertThreshold = Number(els.alertThresholdInput.value);
+
+    if (!Number.isFinite(openingBalance) || !Number.isFinite(alertThreshold)) {
+      showToast("Les montants des paramètres sont invalides.", true);
+      return;
+    }
+
+    state.settings.openingBalance = openingBalance;
+    state.settings.alertThreshold = alertThreshold;
+    state.settings.currency = els.currencyInput.value;
+    persist();
+    renderAll();
+    showToast("Paramètres enregistrés.");
+  }
+
+  function syncSettingsForm() {
+    els.openingBalanceInput.value = state.settings.openingBalance;
+    els.alertThresholdInput.value = state.settings.alertThreshold;
+    els.currencyInput.value = state.settings.currency;
+    els.currencySuffix.textContent = currencySymbol();
+  }
+
+  function loadDemoData() {
+    const today = startOfDay(new Date());
+
+    const demoAccounts = [
+      { id: generateId(), name: "BNI", type: "bank", initialBalance: 850000, currency: "MGA", description: "Compte courant principal", color: "#1d5b4f", active: true, createdAt: new Date().toISOString() },
+      { id: generateId(), name: "MVola", type: "mobile_money", initialBalance: 125000, currency: "MGA", description: "", color: "#1d5b4f", active: true, createdAt: new Date().toISOString() },
+      { id: generateId(), name: "Espèces", type: "cash", initialBalance: 50000, currency: "MGA", description: "", color: "#1d5b4f", active: true, createdAt: new Date().toISOString() },
+      { id: generateId(), name: "Compte épargne", type: "savings", initialBalance: 1200000, currency: "MGA", description: "", color: "#1d5b4f", active: true, createdAt: new Date().toISOString() }
+    ].map(sanitizeAccount);
+
+    const [bni, mvola, cash] = demoAccounts;
+
+    state = {
+      settings: {
+        openingBalance: 4800000,
+        alertThreshold: 1000000,
+        currency: "MGA",
+        forecastDays: 90
+      },
+      events: [
+        makeDemoEvent("Paiement client Atlas", "income", 3200000, addDays(today, 5), "Paiements clients", "confirmed", "none", null, bni.id),
+        makeDemoEvent("Loyer du bureau", "expense", 1200000, addDays(today, 2), "Loyer", "confirmed", "monthly", addMonths(today, 6), bni.id),
+        makeDemoEvent("Salaires équipe", "expense", 2100000, addDays(today, 12), "Salaires", "planned", "monthly", addMonths(today, 6), bni.id),
+        makeDemoEvent("Contrat maintenance", "income", 850000, addDays(today, 9), "Ventes", "planned", "monthly", addMonths(today, 5), mvola.id),
+        makeDemoEvent("Abonnement logiciel", "expense", 180000, addDays(today, 4), "Abonnements", "confirmed", "monthly", addMonths(today, 6), mvola.id),
+        makeDemoEvent("TVA à décaisser", "expense", 640000, addDays(today, 24), "TVA", "planned", "quarterly", addMonths(today, 9), bni.id),
+        makeDemoEvent("Achat matériel", "expense", 1750000, addDays(today, 35), "Achats", "planned", "none", null, bni.id),
+        makeDemoEvent("Paiement client Nova", "income", 2700000, addDays(today, 28), "Paiements clients", "planned", "none", null, bni.id),
+        makeDemoEvent("Dépenses courantes", "expense", 20000, addDays(today, 1), "Autres décaissements", "paid", "none", null, cash.id)
+      ],
+      feasibility: state.feasibility || structuredClone(defaultState.feasibility),
+      accounts: demoAccounts,
+      liabilities: state.liabilities?.length ? state.liabilities : [
+        sanitizeLiability({ id: generateId(), name: "Crédit équipement", amount: 900000, dueDate: toISODate(addMonths(today, 4)), notes: "Mensualités restantes", createdAt: new Date().toISOString() })
+      ]
+    };
+
+    persist();
+    renderAll();
+    showToast("Données de démonstration chargées.");
+  }
+
+  function makeDemoEvent(name, type, amount, date, category, status, recurrence = "none", endDate = null, accountId = "") {
+    return {
+      id: generateId(),
+      name,
+      type,
+      amount,
+      date: toISODate(date),
+      endDate: endDate ? toISODate(endDate) : "",
+      category,
+      status,
+      recurrence,
+      notes: "",
+      accountId,
+      toAccountId: "",
+      transferFee: 0,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `okane-flow-${toISODate(new Date())}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    showToast("Export JSON généré.");
+  }
+
+  function importData(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(reader.result);
+        state = sanitizeState(imported);
+        persist();
+        renderAll();
+        showToast("Données importées avec succès.");
+      } catch {
+        showToast("Le fichier JSON est invalide.", true);
+      } finally {
+        els.importInput.value = "";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function clearData() {
+    const confirmed = window.confirm("Effacer définitivement tous les événements et paramètres ?");
+    if (!confirmed) return;
+
+    state = structuredClone(defaultState);
+    persist();
+    renderAll();
+    showToast("Toutes les données ont été effacées.");
+  }
+
+  function switchView(viewName) {
+    els.navItems.forEach(item => item.classList.toggle("active", item.dataset.view === viewName));
+    els.views.forEach(view => view.classList.toggle("active", view.id === `${viewName}View`));
+    els.pageEyebrow.textContent = pageMeta[viewName][0];
+    els.pageTitle.textContent = pageMeta[viewName][1];
+    els.sidebar.classList.remove("open");
+
+    if (viewName === "dashboard" && chart && typeof chart.resize === "function") {
+      setTimeout(() => {
+        chart.resize();
+      }, 50);
+    }
+  }
+
+  function setDefaultEventDate() {
+    els.eventDateInput.value = toISODate(new Date());
+  }
+
+  function showToast(message, isError = false) {
+    const toast = document.createElement("div");
+    toast.className = `toast${isError ? " error" : ""}`;
+    toast.textContent = message;
+    els.toastContainer.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+  }
+
+  function formatMoney(value) {
+    const currency = state.settings.currency;
+    const options = {
+      maximumFractionDigits: currency === "MGA" ? 0 : 2,
+      minimumFractionDigits: 0
+    };
+
+    if (currency === "MGA") {
+      return `${new Intl.NumberFormat("fr-FR", options).format(value)} Ar`;
+    }
+
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency,
+      ...options
+    }).format(value);
+  }
+
+  function compactMoney(value) {
+    const abs = Math.abs(value);
+    const symbol = currencySymbol();
+    let formatted;
+
+    if (abs >= 1_000_000_000) formatted = `${(value / 1_000_000_000).toFixed(1)} Md`;
+    else if (abs >= 1_000_000) formatted = `${(value / 1_000_000).toFixed(1)} M`;
+    else if (abs >= 1_000) formatted = `${(value / 1_000).toFixed(0)} k`;
+    else formatted = Math.round(value).toString();
+
+    return `${formatted} ${symbol}`;
+  }
+
+  function currencySymbol() {
+    return { MGA: "Ar", EUR: "€", USD: "$" }[state.settings.currency] || "Ar";
+  }
+
+  function formatDate(date) {
+    return new Intl.DateTimeFormat("fr-FR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).format(date);
+  }
+
+  function parseISODate(value) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function toISODate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function isValidDateString(value) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(parseISODate(value).getTime());
+  }
+
+  function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function startOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  }
+
+  function endOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  }
+
+  function addDays(date, days) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return startOfDay(result);
+  }
+
+  function addMonths(date, months) {
+    return new Date(date.getFullYear(), date.getMonth() + months, 1);
+  }
+
+  function addMonthsPreserveDay(date, months) {
+    const targetMonth = date.getMonth() + months;
+    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+    const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+    const lastDay = new Date(targetYear, normalizedMonth + 1, 0).getDate();
+    return new Date(targetYear, normalizedMonth, Math.min(date.getDate(), lastDay));
+  }
+
+  function addYearsPreserveDay(date, years) {
+    const year = date.getFullYear() + years;
+    const month = date.getMonth();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(date.getDate(), lastDay));
+  }
+
+  function startOfWeekMonday(date) {
+    const day = date.getDay() || 7;
+    return addDays(date, 1 - day);
+  }
+
+  function endOfWeekSunday(date) {
+    const day = date.getDay() || 7;
+    return addDays(date, 7 - day);
+  }
+
+  function finiteNumber(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function generateId() {
+    if (crypto?.randomUUID) return crypto.randomUUID();
+    return `evt-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+})();
+
+  </script>
+</body>
+</html>
